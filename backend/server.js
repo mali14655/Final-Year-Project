@@ -17,7 +17,7 @@ import { transcriptToPdfBuffer, getPdfFilename } from "./src/utils/transcriptToP
 import authRoutes from "./src/routes/authRoutes.js";
 import { requireAuth } from "./src/middleware/auth.js";
 import { findProjectForUser, getInterviewAccess } from "./src/utils/accessControl.js";
-import { corsOriginCallback } from "./src/utils/corsConfig.js";
+import { corsOriginCallback, applyCorsHeaders } from "./src/utils/corsConfig.js";
 
 dotenv.config();
 
@@ -41,6 +41,9 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 
 app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    return next();
+  }
   if (!req.path.startsWith("/api")) {
     return next();
   }
@@ -50,12 +53,41 @@ app.use((req, res, next) => {
   return requireAuth(req, res, next);
 });
 
+const VERCEL_MAX_FILE_BYTES = 4 * 1024 * 1024; // Vercel serverless request body limit ~4.5MB
+
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 100 * 1024 * 1024, // 100MB
+    fileSize: process.env.VERCEL ? VERCEL_MAX_FILE_BYTES : 100 * 1024 * 1024,
   },
 });
+
+function handleUpload(fieldName) {
+  return (req, res, next) => {
+    upload.single(fieldName)(req, res, (err) => {
+      if (!err) {
+        return next();
+      }
+
+      applyCorsHeaders(req, res);
+
+      if (err.code === "LIMIT_FILE_SIZE") {
+        const maxMb = process.env.VERCEL ? 4 : 100;
+        return res.status(413).json({
+          error: `File too large. Maximum upload size is ${maxMb}MB${
+            process.env.VERCEL ? " on Vercel hosting" : ""
+          }. Try a shorter audio clip or paste the transcript as text.`,
+          code: "FILE_TOO_LARGE",
+        });
+      }
+
+      return res.status(400).json({
+        error: err.message || "File upload failed",
+        code: "UPLOAD_ERROR",
+      });
+    });
+  };
+}
 
 /**
  * Helper function to parse JSON that might be wrapped in markdown code blocks
@@ -309,7 +341,7 @@ async function processInterview(file) {
 
 app.post(
   "/api/process",
-  upload.single("file"),
+  handleUpload("file"),
   async (req, res) => {
     try {
       if (!req.file) {
@@ -1228,6 +1260,22 @@ app.get("/api/models", async (_req, res) => {
       details: error.message,
     });
   }
+});
+
+app.use((err, req, res, next) => {
+  applyCorsHeaders(req, res);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  console.error("Unhandled server error:", err);
+
+  const statusCode = err.statusCode || 500;
+  return res.status(statusCode).json({
+    error: err.message || "Internal server error",
+    code: err.code,
+  });
 });
 
 if (!process.env.VERCEL) {

@@ -21,6 +21,24 @@ export function getAllowedOrigins() {
 }
 
 /**
+ * Apply CORS headers on error responses (gateway/function failures may skip the cors middleware).
+ */
+export function applyCorsHeaders(req, res) {
+  const origin = req.headers.origin;
+  if (!origin) {
+    return;
+  }
+
+  const normalized = normalizeOrigin(origin);
+  const allowed = getAllowedOrigins();
+  if (allowed.includes(normalized)) {
+    res.setHeader("Access-Control-Allow-Origin", normalized);
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Vary", "Origin");
+  }
+}
+
+/**
  * CORS origin callback — returns the request origin only if it is allowed.
  */
 export function corsOriginCallback(origin, callback) {

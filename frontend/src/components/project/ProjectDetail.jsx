@@ -126,7 +126,7 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
 
     try {
       const response = await api.post("/api/process", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        timeout: 120000,
       });
 
       await api.post(`/api/projects/${projectId}/save`, {
@@ -145,7 +145,14 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
     } catch (err) {
       console.error("Error uploading interview:", err);
       showToast.dismiss(toastId);
-      showToast.error(err.response?.data?.error || "Failed to upload interview");
+      const message =
+        err.response?.data?.error ||
+        (err.code === "ECONNABORTED"
+          ? "Upload timed out. Try a shorter audio file or paste the transcript as text."
+          : err.message === "Network Error"
+            ? "Network error — file may be too large for Vercel (max ~4MB) or the server timed out."
+            : "Failed to upload interview");
+      showToast.error(message);
     } finally {
       setIsUploading(false);
     }
