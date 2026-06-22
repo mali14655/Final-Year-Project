@@ -1,0 +1,23 @@
+Interviewer: Hi Sarah, thanks for joining. Can you tell me about how you use food delivery apps?
+
+Interviewee: Sure. I order food probably three or four times a week, mostly for lunch at work. I use two apps — one for deals, one when I'm in a hurry.
+
+Interviewer: What frustrates you most about the experience?
+
+Interviewee: Checkout. Every time I have to re-enter my address even though I've ordered from the same place twenty times. And the app logs me out constantly, so I have to sign in again before paying.
+
+Interviewer: Anything else?
+
+Interviewee: Search is terrible. I type "biryani" and get pizza places. I also wish there was a dark mode — I order at night and the bright screen hurts my eyes.
+
+Interviewer: If you could change one thing, what would it be?
+
+Interviewee: One-click reorder from my last order. I know what I want. Don't make me browse the whole menu again.
+
+Interviewer: Would you pay extra for faster delivery?
+
+Interviewee: Yes, maybe 50 to 100 rupees extra if it actually arrives in 30 minutes. Right now "fast delivery" still takes an hour.
+
+Interviewer: Great, that's really helpful. Thank you Sarah.
+
+Interviewee: No problem, happy to help.

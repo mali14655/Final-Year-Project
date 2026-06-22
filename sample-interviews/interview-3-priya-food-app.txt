@@ -1,0 +1,23 @@
+Interviewer: Priya, welcome. You mentioned you use delivery apps for family dinners?
+
+Interviewee: Yes, twice a week for my family of four. I need large orders, multiple items, sometimes from two restaurants.
+
+Interviewer: What's the hardest part?
+
+Interviewee: Tracking. I never know where the rider is. The map freezes. My kids ask "when is food coming" and I can't answer. Also packaging — spilled curry twice because bags weren't sealed properly.
+
+Interviewer: Any app usability issues?
+
+Interviewee: The checkout is confusing for group orders. I can't save a family profile. Every order I re-select "no spice" for my daughter and "extra spicy" for my husband.
+
+Interviewer: Pain points with search or navigation?
+
+Interviewee: Navigation yes — too many taps to get to reorder. Search is okay for restaurants but bad for specific dishes. I want "family meal deals" as a category, not buried in promotions.
+
+Interviewer: Would recommendations help?
+
+Interviewee: Only if they're based on what we actually order, not random sponsored restaurants. Show me "you usually order biryani on Friday" — that would be useful.
+
+Interviewer: Perfect. Thank you so much Priya.
+
+Interviewee: Thank you.

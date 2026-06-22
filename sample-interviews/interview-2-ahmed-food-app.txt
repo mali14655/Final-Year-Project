@@ -1,0 +1,23 @@
+Interviewer: Ahmed, thanks for your time. How often do you order food online?
+
+Interviewee: Almost daily. I'm a student, so I don't cook much. Budget is my main concern.
+
+Interviewer: What problems do you run into?
+
+Interviewee: Hidden fees. The price on the menu is not the price at checkout. Delivery fee, service fee, surge fee — I abandon the cart when the total jumps by 30 percent.
+
+Interviewer: Same as others we've talked to — checkout issues?
+
+Interviewee: Yes, exactly. Slow checkout too. Too many screens. Also when the restaurant is out of stock, I only find out after I've paid. That happened twice last month.
+
+Interviewer: What features would you want?
+
+Interviewee: Split payment with friends — we order together in the dorm. And better filters: halal, under 300 rupees, student discounts.
+
+Interviewer: How do you feel about the apps overall?
+
+Interviewee: Mixed. Convenient but stressful. I feel like they're designed to make me spend more, not to help me find cheap good food quickly.
+
+Interviewer: Thanks Ahmed, this is very useful.
+
+Interviewee: Anytime.

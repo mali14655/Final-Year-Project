@@ -1,0 +1,41 @@
+# Cursor Rules - Cursor for PMs
+
+## Project Type
+MERN + Gemini AI + Bull/Redis
+
+## Critical Rules
+
+### 1. NEVER Break Existing Code
+- BEFORE changing any file, check what it does
+- ASK me: "This changes [file]. OK?"
+- Keep all existing functions working
+- Add new code, don't delete old without asking
+
+### 2. File Creation Rules
+- Frontend: React functional components only
+- Backend: Express routes in routes/, logic in services/
+- Models: Mongoose schemas only
+- AI: Each agent in separate file under agents/
+
+### 3. Code Standards
+- Use async/await, no .then()
+- Error handling in all try/catch
+- No console.log in production code
+- Environment variables from .env only
+
+### 4. Database
+- MongoDB for all data
+- GridFS for audio/video files
+- Index all query fields
+
+### 5. When to Ask
+Ask before:
+- Changing any working feature
+- Adding new dependencies
+- Changing folder structure
+- Modifying AI prompts
+
+Don't ask for:
+- Basic syntax
+- Standard patterns
+- Minor fixes
