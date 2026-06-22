@@ -142,10 +142,13 @@ export async function getUserById(userId) {
 }
 
 export function getRefreshCookieOptions() {
+  const isProduction = process.env.NODE_ENV === "production";
+
   return {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProduction,
+    // Cross-origin frontend/backend on Vercel requires SameSite=None
+    sameSite: isProduction ? "none" : "lax",
     maxAge: REFRESH_COOKIE_MAX_AGE_MS,
     path: "/api/auth",
   };

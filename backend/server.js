@@ -17,6 +17,7 @@ import { transcriptToPdfBuffer, getPdfFilename } from "./src/utils/transcriptToP
 import authRoutes from "./src/routes/authRoutes.js";
 import { requireAuth } from "./src/middleware/auth.js";
 import { findProjectForUser, getInterviewAccess } from "./src/utils/accessControl.js";
+import { corsOriginCallback } from "./src/utils/corsConfig.js";
 
 dotenv.config();
 
@@ -26,12 +27,10 @@ connectDB().catch(console.error);
 const app = express();
 
 const PORT = process.env.PORT || 5000;
-const FRONTEND_ORIGIN =
-  process.env.FRONTEND_ORIGIN || "http://localhost:3000";
 
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
+    origin: corsOriginCallback,
     credentials: true,
   })
 );
