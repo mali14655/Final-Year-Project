@@ -14,6 +14,7 @@ root.render(
         <App />
         <Toaster
           position="top-right"
+          containerStyle={{ zIndex: 15000 }}
           toastOptions={{
             duration: 4000,
           }}

@@ -1,195 +1,438 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
 import { useAuth } from "./context/AuthContext";
+
+import LandingPage from "./components/landing/LandingPage";
 import AuthPage from "./components/auth/AuthPage";
+
 import ProtectedRoute from "./components/auth/ProtectedRoute";
+
 import ProjectCards from "./components/project/ProjectCards";
+
 import ProjectDetail from "./components/project/ProjectDetail";
+
 import ProjectSelector from "./components/project/ProjectSelector";
 
+import LoadingSpinner from "./components/common/LoadingSpinner";
+
+import ProfileDrawer from "./components/common/ProfileDrawer";
+
+import SettingsModal from "./components/common/SettingsModal";
+
+import HowItWorksPage from "./components/common/HowItWorksPage";
+
+import AdminApprovalsPanel from "./components/admin/AdminApprovalsPanel";
+
+import AppHeader from "./components/common/AppHeader";
+
+import { usePreferences } from "./hooks/usePreferences";
+
+
+
 function App() {
-  const { user, loading, isAuthenticated, logout } = useAuth();
+
+  const { user, loading, isAuthenticated, logout, updateUser } = useAuth();
+
+  const isSuperAdmin = Boolean(user?.isSuperAdmin);
+
+  const { compactView } = usePreferences();
+
   const [view, setView] = useState("projects");
+
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+
   const [showCreateForm, setShowCreateForm] = useState(false);
 
-  if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0f172a",
-          color: "#9ca3af",
-        }}
-      >
-        Loading...
-      </div>
-    );
-  }
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
-  if (!isAuthenticated) {
-    return <AuthPage />;
-  }
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const handleBackToProjects = () => {
-    setView("projects");
-    setSelectedProjectId(null);
+  const [guideSection, setGuideSection] = useState("overview");
+
+  const [returnView, setReturnView] = useState("projects");
+
+  const [publicView, setPublicView] = useState("landing");
+
+
+
+  const goHome = () => {
+
+    setPublicView("landing");
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
   };
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "2rem 1rem",
-        background: "#0f172a",
-        color: "#e5e7eb",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-      }}
-    >
-      <div style={{ width: "100%", maxWidth: "1400px" }}>
-        <header
-          style={{
-            marginBottom: "2rem",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "1rem",
-            flexWrap: "wrap",
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                fontSize: "1.875rem",
-                fontWeight: 700,
-                letterSpacing: "-0.03em",
-                color: "#e5e7eb",
-              }}
-            >
-              Cursor for Product Managers
-            </h1>
-            <p style={{ marginTop: "0.25rem", color: "#9ca3af" }}>
-              Manage interviews, insights, and PRDs in organized projects.
-            </p>
-          </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <span style={{ color: "#d1d5db", fontSize: "0.875rem" }}>{user?.name}</span>
-            <button
-              type="button"
-              onClick={logout}
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: "0.5rem",
-                border: "1px solid #374151",
-                backgroundColor: "#030712",
-                color: "#e5e7eb",
-                fontSize: "0.875rem",
-                cursor: "pointer",
-              }}
-            >
-              Log out
-            </button>
-          </div>
-        </header>
+
+  const goWorkspace = () => {
+
+    if (isAuthenticated) {
+
+      setPublicView("app");
+
+      setView(isSuperAdmin ? "admin" : "projects");
+
+      setSelectedProjectId(null);
+
+      return;
+
+    }
+
+    setPublicView("login");
+
+  };
+
+
+
+  useEffect(() => {
+
+    if (isSuperAdmin) {
+
+      setPublicView("app");
+
+      setView("admin");
+
+    }
+
+  }, [isSuperAdmin]);
+
+
+
+  const openHowItWorks = (section = "overview") => {
+
+    setReturnView(view);
+
+    setGuideSection(section);
+
+    setView("guide");
+
+    setPublicView("app");
+
+  };
+
+
+
+  const handleBackFromGuide = () => {
+
+    setView(returnView);
+
+  };
+
+
+
+  if (loading) {
+    return <LoadingSpinner variant="fullPage" />;
+  }
+
+
+
+  const sharedDrawer = (
+
+    <>
+
+      <ProfileDrawer
+
+        open={drawerOpen}
+
+        onClose={() => setDrawerOpen(false)}
+
+        user={user}
+
+        onLogout={async () => {
+
+          await logout();
+
+          setPublicView("landing");
+
+          setView("projects");
+
+          setSelectedProjectId(null);
+
+        }}
+
+        onGoHome={goWorkspace}
+
+        onOpenSettings={() => setSettingsOpen(true)}
+
+        onOpenAdmin={() => setView("admin")}
+
+      />
+
+
+
+      <SettingsModal
+
+        open={settingsOpen}
+
+        onClose={() => setSettingsOpen(false)}
+
+        user={user}
+
+        onUserUpdate={updateUser}
+
+        onRequireReauth={async () => {
+
+          await logout();
+
+          setSettingsOpen(false);
+
+          setPublicView("landing");
+
+        }}
+
+      />
+
+    </>
+
+  );
+
+
+
+  if (publicView === "landing" && !(isAuthenticated && isSuperAdmin)) {
+
+    return (
+
+      <>
+
+        {isAuthenticated && sharedDrawer}
+
+        <LandingPage
+
+          user={user}
+
+          onHome={goHome}
+
+          onWorkspace={goWorkspace}
+
+          onSignIn={() => setPublicView("login")}
+
+          onSignUp={() => setPublicView("register")}
+
+          onHowItWorks={() => openHowItWorks("overview")}
+
+          onOpenProfile={() => setDrawerOpen(true)}
+
+        />
+
+      </>
+
+    );
+
+  }
+
+
+
+  if (!isAuthenticated) {
+
+    return (
+
+      <AuthPage
+
+        initialMode={publicView === "register" ? "register" : "login"}
+
+        onHome={goHome}
+
+        onWorkspace={goWorkspace}
+
+        onSignIn={() => setPublicView("login")}
+
+        onSignUp={() => setPublicView("register")}
+
+      />
+
+    );
+
+  }
+
+
+
+  if (isSuperAdmin) {
+
+    return (
+
+      <div className="app-shell app-shell--super-admin">
+
+        {sharedDrawer}
+
+
+
+        <AppHeader
+
+          user={user}
+
+          superAdminMode
+
+          onLogoClick={() => setView("admin")}
+
+          onOpenProfile={() => setDrawerOpen(true)}
+
+        />
+
+
+
+        <div className="app-container app-main">
+
+          <ProtectedRoute>
+
+            <AdminApprovalsPanel isHome userName={user?.name} />
+
+          </ProtectedRoute>
+
+        </div>
+
+      </div>
+
+    );
+
+  }
+
+
+
+  return (
+
+    <div className={`app-shell${compactView ? " compact-view" : ""}`}>
+
+      {sharedDrawer}
+
+
+
+      <AppHeader
+
+        user={user}
+
+        onLogoClick={goHome}
+
+        onNavigateHome={goHome}
+
+        onNavigateWorkspace={goWorkspace}
+
+        onHowItWorks={() => openHowItWorks("overview")}
+
+        onOpenProfile={() => setDrawerOpen(true)}
+
+        guideActive={view === "guide"}
+
+      />
+
+
+
+      <div className="app-container app-main">
 
         <ProtectedRoute>
-          {view === "projects" ? (
+
+          {view === "projects" && (
+
             <ProjectCards
+
+              onOpenHowItWorks={openHowItWorks}
+
               onProjectSelect={(projectId, isNew) => {
+
                 if (isNew) {
+
                   setShowCreateForm(true);
+
                   setView("detail");
+
                 } else if (projectId) {
+
                   setSelectedProjectId(projectId);
+
                   setView("detail");
+
                 }
+
               }}
+
             />
-          ) : (
-            <ProjectDetail
-              projectId={selectedProjectId}
-              onBack={handleBackToProjects}
-              onCreateNew={() => {
-                setShowCreateForm(true);
-                setSelectedProjectId(null);
-              }}
-            />
+
           )}
 
-          {showCreateForm && (
-            <div
-              style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: "rgba(0, 0, 0, 0.8)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                zIndex: 1000,
+
+
+          {view === "detail" && (
+
+            <ProjectDetail
+
+              projectId={selectedProjectId}
+
+              onBack={() => {
+
+                setView("projects");
+
+                setSelectedProjectId(null);
+
               }}
-            >
-              <div
-                style={{
-                  backgroundColor: "#020617",
-                  borderRadius: "1rem",
-                  padding: "2rem",
-                  border: "1px solid #1f2937",
-                  maxWidth: "500px",
-                  width: "90%",
-                }}
-              >
+
+              onOpenHowItWorks={openHowItWorks}
+
+              onCreateNew={() => {
+
+                setShowCreateForm(true);
+
+                setSelectedProjectId(null);
+
+              }}
+
+            />
+
+          )}
+
+
+
+          {view === "guide" && (
+
+            <HowItWorksPage initialSection={guideSection} onBack={handleBackFromGuide} />
+
+          )}
+
+
+
+          {showCreateForm && (
+
+            <div className="modal-overlay">
+
+              <div className="modal-content modal-content-project">
+                <p className="eyebrow">New project</p>
+                <h2 className="heading-md modal-project-title">Create a research project</h2>
+
                 <ProjectSelector
-                  selectedProjectId={null}
-                  onProjectSelect={(id) => {
-                    if (id) {
-                      setSelectedProjectId(id);
-                      setShowCreateForm(false);
-                      setView("detail");
-                    }
-                  }}
                   onProjectCreate={(id) => {
                     setSelectedProjectId(id);
                     setShowCreateForm(false);
                     setView("detail");
                   }}
                 />
+
                 <button
+                  type="button"
                   onClick={() => {
                     setShowCreateForm(false);
                     if (!selectedProjectId) {
                       setView("projects");
                     }
                   }}
-                  style={{
-                    marginTop: "1rem",
-                    width: "100%",
-                    padding: "0.75rem",
-                    borderRadius: "0.5rem",
-                    border: "1px solid #374151",
-                    backgroundColor: "#030712",
-                    color: "#e5e7eb",
-                    fontSize: "0.9rem",
-                    cursor: "pointer",
-                  }}
+                  className="btn btn-secondary btn-block modal-project-cancel"
                 >
                   Cancel
                 </button>
               </div>
+
             </div>
+
           )}
+
         </ProtectedRoute>
+
       </div>
+
     </div>
+
   );
+
 }
+
+
 
 export default App;

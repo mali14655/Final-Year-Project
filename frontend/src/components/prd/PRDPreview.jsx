@@ -422,7 +422,7 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
           style={{
             fontSize: "1rem",
             fontWeight: 600,
-            color: "#e5e7eb",
+            color: "#0f172a",
           }}
         >
           PRD Generated Successfully
@@ -433,9 +433,9 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
             style={{
               padding: "0.5rem 1rem",
               borderRadius: "0.5rem",
-              border: "1px solid #374151",
-              backgroundColor: "#030712",
-              color: "#e5e7eb",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#f8fafc",
+              color: "#0f172a",
               fontSize: "0.85rem",
               cursor: "pointer",
               fontWeight: 500,
@@ -448,9 +448,9 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
             style={{
               padding: "0.5rem 1rem",
               borderRadius: "0.5rem",
-              border: "1px solid #374151",
-              backgroundColor: "#030712",
-              color: "#e5e7eb",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#f8fafc",
+              color: "#0f172a",
               fontSize: "0.85rem",
               cursor: "pointer",
               fontWeight: 500,
@@ -463,9 +463,9 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
             style={{
               padding: "0.5rem 1rem",
               borderRadius: "0.5rem",
-              border: "1px solid #374151",
-              backgroundColor: "#030712",
-              color: "#e5e7eb",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#f8fafc",
+              color: "#0f172a",
               fontSize: "0.85rem",
               cursor: "pointer",
               fontWeight: 500,
@@ -483,30 +483,30 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
           maxHeight: "600px",
           overflowY: "auto",
           padding: "1rem",
-          backgroundColor: "#030712",
+          backgroundColor: "#f8fafc",
           borderRadius: "0.5rem",
-          border: "1px solid #1f2937",
+          border: "1px solid #e2e8f0",
         }}
       >
         <div
           style={{
-            color: "#d1d5db",
+            color: "#334155",
             fontSize: "0.9rem",
             lineHeight: "1.6",
           }}
         >
           {/* Title */}
-          <h1 style={{ color: "#e5e7eb", marginBottom: "0.5rem" }}>
+          <h1 style={{ color: "#0f172a", marginBottom: "0.5rem" }}>
             {prd.title || projectName || "Product Requirements Document"}
           </h1>
-          <p style={{ color: "#9ca3af", marginBottom: "1.5rem" }}>
+          <p style={{ color: "#64748b", marginBottom: "1.5rem" }}>
             Version {prd.version || "1.0"} • {prd.date || new Date().toISOString().split("T")[0]}
           </p>
 
           {/* Executive Summary */}
           {prd.executiveSummary && (
             <section style={{ marginBottom: "2rem" }}>
-              <h2 style={{ color: "#e5e7eb", marginBottom: "0.75rem" }}>Executive Summary</h2>
+              <h2 style={{ color: "#0f172a", marginBottom: "0.75rem" }}>Executive Summary</h2>
               <p>{prd.executiveSummary}</p>
             </section>
           )}
@@ -514,10 +514,10 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
           {/* Problem Statement */}
           {prd.problemStatement && (
             <section style={{ marginBottom: "2rem" }}>
-              <h2 style={{ color: "#e5e7eb", marginBottom: "0.75rem" }}>Problem Statement</h2>
+              <h2 style={{ color: "#0f172a", marginBottom: "0.75rem" }}>Problem Statement</h2>
               {prd.problemStatement.problem && (
                 <div style={{ marginBottom: "1rem" }}>
-                  <h3 style={{ color: "#d1d5db", fontSize: "1rem", marginBottom: "0.5rem" }}>
+                  <h3 style={{ color: "#334155", fontSize: "1rem", marginBottom: "0.5rem" }}>
                     Problem
                   </h3>
                   <p>{prd.problemStatement.problem}</p>
@@ -525,7 +525,7 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
               )}
               {prd.problemStatement.impact && (
                 <div style={{ marginBottom: "1rem" }}>
-                  <h3 style={{ color: "#d1d5db", fontSize: "1rem", marginBottom: "0.5rem" }}>
+                  <h3 style={{ color: "#334155", fontSize: "1rem", marginBottom: "0.5rem" }}>
                     Impact
                   </h3>
                   <p>{prd.problemStatement.impact}</p>
@@ -533,7 +533,7 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
               )}
               {prd.problemStatement.currentState && (
                 <div style={{ marginBottom: "1rem" }}>
-                  <h3 style={{ color: "#d1d5db", fontSize: "1rem", marginBottom: "0.5rem" }}>
+                  <h3 style={{ color: "#334155", fontSize: "1rem", marginBottom: "0.5rem" }}>
                     Current State
                   </h3>
                   <p>{prd.problemStatement.currentState}</p>
@@ -541,7 +541,7 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
               )}
               {prd.problemStatement.desiredState && (
                 <div>
-                  <h3 style={{ color: "#d1d5db", fontSize: "1rem", marginBottom: "0.5rem" }}>
+                  <h3 style={{ color: "#334155", fontSize: "1rem", marginBottom: "0.5rem" }}>
                     Desired State
                   </h3>
                   <p>{prd.problemStatement.desiredState}</p>
@@ -553,30 +553,30 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
           {/* User Personas */}
           {prd.userPersonas && prd.userPersonas.length > 0 && (
             <section style={{ marginBottom: "2rem" }}>
-              <h2 style={{ color: "#e5e7eb", marginBottom: "0.75rem" }}>User Personas</h2>
+              <h2 style={{ color: "#0f172a", marginBottom: "0.75rem" }}>User Personas</h2>
               {prd.userPersonas.map((persona, index) => (
                 <div
                   key={index}
                   style={{
                     marginBottom: "1.5rem",
                     padding: "1rem",
-                    backgroundColor: "#0f172a",
+                    backgroundColor: "#f8fafc",
                     borderRadius: "0.5rem",
-                    border: "1px solid #1f2937",
+                    border: "1px solid #e2e8f0",
                   }}
                 >
-                  <h3 style={{ color: "#e5e7eb", marginBottom: "0.5rem" }}>
+                  <h3 style={{ color: "#0f172a", marginBottom: "0.5rem" }}>
                     {persona.name || `Persona ${index + 1}`}
                   </h3>
                   {persona.basedOnInterview && (
-                    <p style={{ color: "#9ca3af", fontSize: "0.85rem", marginBottom: "0.5rem" }}>
+                    <p style={{ color: "#64748b", fontSize: "0.85rem", marginBottom: "0.5rem" }}>
                       Based on: {persona.basedOnInterview}
                     </p>
                   )}
                   {persona.description && <p style={{ marginBottom: "0.75rem" }}>{persona.description}</p>}
                   {persona.needs && persona.needs.length > 0 && (
                     <div style={{ marginBottom: "0.75rem" }}>
-                      <strong style={{ color: "#d1d5db" }}>Needs:</strong>
+                      <strong style={{ color: "#334155" }}>Needs:</strong>
                       <ul style={{ marginLeft: "1.5rem", marginTop: "0.25rem" }}>
                         {persona.needs.map((need, i) => (
                           <li key={i}>{need}</li>
@@ -586,7 +586,7 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
                   )}
                   {persona.painPoints && persona.painPoints.length > 0 && (
                     <div>
-                      <strong style={{ color: "#d1d5db" }}>Pain Points:</strong>
+                      <strong style={{ color: "#334155" }}>Pain Points:</strong>
                       <ul style={{ marginLeft: "1.5rem", marginTop: "0.25rem" }}>
                         {persona.painPoints.map((pain, i) => (
                           <li key={i}>{pain}</li>
@@ -602,25 +602,25 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
           {/* Goals */}
           {prd.goals && prd.goals.length > 0 && (
             <section style={{ marginBottom: "2rem" }}>
-              <h2 style={{ color: "#e5e7eb", marginBottom: "0.75rem" }}>Goals & Success Metrics</h2>
+              <h2 style={{ color: "#0f172a", marginBottom: "0.75rem" }}>Goals & Success Metrics</h2>
               {prd.goals.map((goal, index) => (
                 <div
                   key={index}
                   style={{
                     marginBottom: "1rem",
                     padding: "0.75rem",
-                    backgroundColor: "#0f172a",
+                    backgroundColor: "#f8fafc",
                     borderRadius: "0.5rem",
                   }}
                 >
-                  <strong style={{ color: "#e5e7eb" }}>{index + 1}. {goal.goal}</strong>
+                  <strong style={{ color: "#0f172a" }}>{index + 1}. {goal.goal}</strong>
                   {goal.metric && (
-                    <div style={{ marginTop: "0.25rem", fontSize: "0.85rem", color: "#9ca3af" }}>
+                    <div style={{ marginTop: "0.25rem", fontSize: "0.85rem", color: "#64748b" }}>
                       Metric: {goal.metric}
                     </div>
                   )}
                   {goal.target && (
-                    <div style={{ fontSize: "0.85rem", color: "#9ca3af" }}>
+                    <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
                       Target: {goal.target}
                     </div>
                   )}
@@ -632,20 +632,20 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
           {/* Features */}
           {prd.features && prd.features.length > 0 && (
             <section style={{ marginBottom: "2rem" }}>
-              <h2 style={{ color: "#e5e7eb", marginBottom: "0.75rem" }}>Features & Requirements</h2>
+              <h2 style={{ color: "#0f172a", marginBottom: "0.75rem" }}>Features & Requirements</h2>
               {prd.features.map((feature, index) => (
                 <div
                   key={index}
                   style={{
                     marginBottom: "1.5rem",
                     padding: "1rem",
-                    backgroundColor: "#0f172a",
+                    backgroundColor: "#f8fafc",
                     borderRadius: "0.5rem",
-                    border: "1px solid #1f2937",
+                    border: "1px solid #e2e8f0",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "0.5rem" }}>
-                    <h3 style={{ color: "#e5e7eb" }}>{feature.name || `Feature ${index + 1}`}</h3>
+                    <h3 style={{ color: "#0f172a" }}>{feature.name || `Feature ${index + 1}`}</h3>
                     <span
                       style={{
                         fontSize: "0.75rem",
@@ -663,13 +663,13 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
 
                   {feature.userStories && feature.userStories.length > 0 && (
                     <div style={{ marginBottom: "0.75rem" }}>
-                      <strong style={{ color: "#d1d5db" }}>User Stories:</strong>
+                      <strong style={{ color: "#334155" }}>User Stories:</strong>
                       <ul style={{ marginLeft: "1.5rem", marginTop: "0.25rem" }}>
                         {feature.userStories.map((story, i) => (
                           <li key={i} style={{ marginBottom: "0.5rem" }}>
                             <div>{story.story}</div>
                             {story.acceptanceCriteria && story.acceptanceCriteria.length > 0 && (
-                              <ul style={{ marginLeft: "1rem", marginTop: "0.25rem", fontSize: "0.85rem", color: "#9ca3af" }}>
+                              <ul style={{ marginLeft: "1rem", marginTop: "0.25rem", fontSize: "0.85rem", color: "#64748b" }}>
                                 {story.acceptanceCriteria.map((criteria, j) => (
                                   <li key={j}>{criteria}</li>
                                 ))}
@@ -682,15 +682,15 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
                   )}
 
                   {feature.dependencies && feature.dependencies.length > 0 && (
-                    <div style={{ marginBottom: "0.5rem", fontSize: "0.85rem", color: "#9ca3af" }}>
+                    <div style={{ marginBottom: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>
                       <strong>Dependencies:</strong> {feature.dependencies.join(", ")}
                     </div>
                   )}
 
                   {feature.risks && feature.risks.length > 0 && (
                     <div style={{ fontSize: "0.85rem" }}>
-                      <strong style={{ color: "#d1d5db" }}>Risks:</strong>
-                      <ul style={{ marginLeft: "1.5rem", marginTop: "0.25rem", color: "#9ca3af" }}>
+                      <strong style={{ color: "#334155" }}>Risks:</strong>
+                      <ul style={{ marginLeft: "1.5rem", marginTop: "0.25rem", color: "#64748b" }}>
                         {feature.risks.map((risk, i) => (
                           <li key={i}>{risk}</li>
                         ))}
@@ -705,25 +705,25 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
           {/* Timeline */}
           {prd.timeline && prd.timeline.phases && prd.timeline.phases.length > 0 && (
             <section style={{ marginBottom: "2rem" }}>
-              <h2 style={{ color: "#e5e7eb", marginBottom: "0.75rem" }}>Timeline</h2>
+              <h2 style={{ color: "#0f172a", marginBottom: "0.75rem" }}>Timeline</h2>
               {prd.timeline.phases.map((phase, index) => (
                 <div
                   key={index}
                   style={{
                     marginBottom: "1rem",
                     padding: "0.75rem",
-                    backgroundColor: "#0f172a",
+                    backgroundColor: "#f8fafc",
                     borderRadius: "0.5rem",
                   }}
                 >
-                  <strong style={{ color: "#e5e7eb" }}>{phase.phase}</strong>
+                  <strong style={{ color: "#0f172a" }}>{phase.phase}</strong>
                   {phase.duration && (
-                    <span style={{ marginLeft: "0.5rem", fontSize: "0.85rem", color: "#9ca3af" }}>
+                    <span style={{ marginLeft: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>
                       ({phase.duration})
                     </span>
                   )}
                   {phase.milestones && phase.milestones.length > 0 && (
-                    <ul style={{ marginLeft: "1.5rem", marginTop: "0.5rem", fontSize: "0.85rem", color: "#9ca3af" }}>
+                    <ul style={{ marginLeft: "1.5rem", marginTop: "0.5rem", fontSize: "0.85rem", color: "#64748b" }}>
                       {phase.milestones.map((milestone, i) => (
                         <li key={i}>{milestone}</li>
                       ))}
@@ -737,10 +737,10 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
           {/* Success Metrics */}
           {prd.successMetrics && (
             <section>
-              <h2 style={{ color: "#e5e7eb", marginBottom: "0.75rem" }}>Success Metrics</h2>
+              <h2 style={{ color: "#0f172a", marginBottom: "0.75rem" }}>Success Metrics</h2>
               {prd.successMetrics.primary && prd.successMetrics.primary.length > 0 && (
                 <div style={{ marginBottom: "1rem" }}>
-                  <strong style={{ color: "#d1d5db" }}>Primary Metrics:</strong>
+                  <strong style={{ color: "#334155" }}>Primary Metrics:</strong>
                   <ul style={{ marginLeft: "1.5rem", marginTop: "0.25rem" }}>
                     {prd.successMetrics.primary.map((metric, i) => (
                       <li key={i}>{metric}</li>
@@ -750,7 +750,7 @@ function PRDPreview({ prd, projectName, onRegenerate }) {
               )}
               {prd.successMetrics.secondary && prd.successMetrics.secondary.length > 0 && (
                 <div>
-                  <strong style={{ color: "#d1d5db" }}>Secondary Metrics:</strong>
+                  <strong style={{ color: "#334155" }}>Secondary Metrics:</strong>
                   <ul style={{ marginLeft: "1.5rem", marginTop: "0.25rem" }}>
                     {prd.successMetrics.secondary.map((metric, i) => (
                       <li key={i}>{metric}</li>

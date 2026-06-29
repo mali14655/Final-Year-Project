@@ -1,4 +1,4 @@
-# Cursor for PMs — Final Year Project
+# ParseAi — Final Year Project
 
 MERN app that turns user interviews into insights, cross-interview patterns, and a PRD using Google Gemini.
 

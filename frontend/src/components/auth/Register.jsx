@@ -1,25 +1,8 @@
 import React, { useState } from "react";
 import { showToast } from "../../utils/toast";
+import PasswordInput from "./PasswordInput";
 
-const inputStyle = {
-  width: "100%",
-  padding: "0.75rem",
-  borderRadius: "0.5rem",
-  border: "1px solid #374151",
-  backgroundColor: "#030712",
-  color: "#e5e7eb",
-  fontSize: "0.9rem",
-};
-
-const labelStyle = {
-  display: "block",
-  fontSize: "0.875rem",
-  fontWeight: 500,
-  marginBottom: "0.5rem",
-  color: "#d1d5db",
-};
-
-function Register({ onRegister, onSwitchToLogin }) {
+function Register({ onRegister, onPendingApproval }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,19 +13,24 @@ function Register({ onRegister, onSwitchToLogin }) {
     setIsSubmitting(true);
 
     try {
-      await onRegister(name, email, password);
+      const result = await onRegister(name, email, password);
+      if (result?.pendingApproval) {
+        showToast.success("Account submitted. You can sign in after admin approval.");
+        onPendingApproval?.();
+        return;
+      }
       showToast.success("Account created!");
     } catch (err) {
-      showToast.error(err.response?.data?.error || "Registration failed");
+      showToast.apiError(err, "Registration failed. Please check your details and try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <div style={{ marginBottom: "1rem" }}>
-        <label htmlFor="register-name" style={labelStyle}>
+    <form onSubmit={handleSubmit} className="auth-form">
+      <div className="form-group">
+        <label htmlFor="register-name" className="label">
           Name
         </label>
         <input
@@ -52,13 +40,13 @@ function Register({ onRegister, onSwitchToLogin }) {
           onChange={(e) => setName(e.target.value)}
           required
           autoComplete="name"
-          style={inputStyle}
+          className="input"
           placeholder="Your name"
         />
       </div>
 
-      <div style={{ marginBottom: "1rem" }}>
-        <label htmlFor="register-email" style={labelStyle}>
+      <div className="form-group">
+        <label htmlFor="register-email" className="label">
           Email
         </label>
         <input
@@ -68,63 +56,28 @@ function Register({ onRegister, onSwitchToLogin }) {
           onChange={(e) => setEmail(e.target.value)}
           required
           autoComplete="email"
-          style={inputStyle}
+          className="input"
           placeholder="you@example.com"
         />
       </div>
 
-      <div style={{ marginBottom: "1.25rem" }}>
-        <label htmlFor="register-password" style={labelStyle}>
+      <div className="form-group auth-form-field-last">
+        <label htmlFor="register-password" className="label">
           Password
         </label>
-        <input
+        <PasswordInput
           id="register-password"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
           minLength={6}
           autoComplete="new-password"
-          style={inputStyle}
           placeholder="At least 6 characters"
         />
       </div>
 
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        style={{
-          width: "100%",
-          padding: "0.75rem 1rem",
-          borderRadius: "0.75rem",
-          border: "none",
-          background: isSubmitting ? "#374151" : "linear-gradient(135deg, #4f46e5, #6366f1, #0ea5e9)",
-          color: "#f9fafb",
-          fontWeight: 600,
-          fontSize: "0.95rem",
-          cursor: isSubmitting ? "default" : "pointer",
-          opacity: isSubmitting ? 0.7 : 1,
-        }}
-      >
+      <button type="submit" disabled={isSubmitting} className="btn btn-primary btn-block btn-lg auth-submit">
         {isSubmitting ? "Creating account..." : "Create Account"}
       </button>
-
-      <p style={{ marginTop: "1rem", textAlign: "center", color: "#9ca3af", fontSize: "0.875rem" }}>
-        Already have an account?{" "}
-        <button
-          type="button"
-          onClick={onSwitchToLogin}
-          style={{
-            background: "none",
-            border: "none",
-            color: "#93c5fd",
-            cursor: "pointer",
-            fontWeight: 500,
-          }}
-        >
-          Sign in
-        </button>
-      </p>
     </form>
   );
 }

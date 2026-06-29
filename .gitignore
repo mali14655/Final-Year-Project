@@ -43,3 +43,5 @@ docs/*.pdf
 .cache/
 .pnp
 .pnp.js
+.vercel
+.env*

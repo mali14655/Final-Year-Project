@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Cursor for Product Managers — FYP project root",
+  "description": "ParseAi — FYP project root",
   "scripts": {
     "generate-pdf": "node scripts/generate-project-pdf.js"
   },

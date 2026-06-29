@@ -25,7 +25,7 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
   };
 
   const SectionHint = ({ children }) => (
-    <p style={{ color: "#9ca3af", fontSize: "0.85rem", marginBottom: "1rem", lineHeight: 1.5 }}>{children}</p>
+    <p className="prd-doc-hint">{children}</p>
   );
 
   const PersonaList = ({ label, items, onChange }) => {
@@ -35,8 +35,8 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
       if (!items || items.length === 0) return null;
       return (
         <div style={{ marginBottom: "1rem" }}>
-          <strong style={{ color: "#d1d5db", display: "block", marginBottom: "0.25rem" }}>{label}:</strong>
-          <ul style={{ color: "#e5e7eb", margin: 0, paddingLeft: "1.25rem" }}>
+          <strong style={{ color: "#334155", display: "block", marginBottom: "0.25rem" }}>{label}:</strong>
+          <ul style={{ color: "#0f172a", margin: 0, paddingLeft: "1.25rem" }}>
             {items.map((item, i) => (
               <li key={i} style={{ marginBottom: "0.25rem" }}>{item}</li>
             ))}
@@ -47,7 +47,7 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
 
     return (
       <div style={{ marginBottom: "1rem" }}>
-        <label style={{ color: "#d1d5db", display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
+        <label style={{ color: "#334155", display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
           {label} (one per line):
         </label>
         <textarea
@@ -57,9 +57,9 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
             width: "100%",
             padding: "0.75rem",
             borderRadius: "0.5rem",
-            border: "1px solid #374151",
-            backgroundColor: "#030712",
-            color: "#e5e7eb",
+            border: "1px solid #e2e8f0",
+            backgroundColor: "#f8fafc",
+            color: "#0f172a",
             fontSize: "0.9rem",
             fontFamily: "inherit",
             minHeight: "80px",
@@ -95,7 +95,7 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
     }
   };
 
-  const EditableField = ({ label, value, onChange, multiline = false, section = null }) => {
+  const EditableField = ({ label, value, onChange, multiline = false, titleField = false }) => {
     const [isEditingField, setIsEditingField] = useState(false);
     const [tempValue, setTempValue] = useState(value || "");
 
@@ -110,17 +110,27 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
     };
 
     if (!isEditingField && !isEditing) {
+      if (titleField) {
+        return <h1 className="prd-doc-title">{value || "Untitled PRD"}</h1>;
+      }
+      if (!label) {
+        return (
+          <p style={{ color: "#0f172a", whiteSpace: "pre-wrap", marginBottom: "1rem" }}>
+            {value || "Not set"}
+          </p>
+        );
+      }
       return (
         <div style={{ marginBottom: "1rem" }}>
-          <strong style={{ color: "#d1d5db", display: "block", marginBottom: "0.25rem" }}>{label}:</strong>
-          <p style={{ color: "#e5e7eb", whiteSpace: "pre-wrap" }}>{value || "Not set"}</p>
+          <strong style={{ color: "#334155", display: "block", marginBottom: "0.25rem" }}>{label}:</strong>
+          <p style={{ color: "#0f172a", whiteSpace: "pre-wrap" }}>{value || "Not set"}</p>
         </div>
       );
     }
 
     return (
       <div style={{ marginBottom: "1rem" }}>
-        <label style={{ color: "#d1d5db", display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
+        <label style={{ color: "#334155", display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
           {label}:
         </label>
         {multiline ? (
@@ -131,9 +141,9 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
               width: "100%",
               padding: "0.75rem",
               borderRadius: "0.5rem",
-              border: "1px solid #374151",
-              backgroundColor: "#030712",
-              color: "#e5e7eb",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#f8fafc",
+              color: "#0f172a",
               fontSize: "0.9rem",
               fontFamily: "inherit",
               minHeight: "100px",
@@ -150,9 +160,9 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
               width: "100%",
               padding: "0.75rem",
               borderRadius: "0.5rem",
-              border: "1px solid #374151",
-              backgroundColor: "#030712",
-              color: "#e5e7eb",
+              border: "1px solid #e2e8f0",
+              backgroundColor: "#f8fafc",
+              color: "#0f172a",
               fontSize: "0.9rem",
             }}
           />
@@ -178,9 +188,9 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
             style={{
               padding: "0.5rem 1rem",
               borderRadius: "0.5rem",
-              border: "1px solid #374151",
+              border: "1px solid #e2e8f0",
               backgroundColor: "transparent",
-              color: "#e5e7eb",
+              color: "#0f172a",
               fontSize: "0.85rem",
               cursor: "pointer",
             }}
@@ -194,157 +204,77 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
 
   return (
     <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "1rem",
-          flexWrap: "wrap",
-          gap: "0.5rem",
-        }}
-      >
-        <h3
-          style={{
-            fontSize: "1rem",
-            fontWeight: 600,
-            color: "#e5e7eb",
-          }}
-        >
-          PRD Document
-        </h3>
-        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+      <div className="prd-toolbar">
+        <h3 className="prd-toolbar-title">PRD Document</h3>
+        <div className="prd-toolbar-actions">
           <button
+            type="button"
             onClick={() => setIsEditing(!isEditing)}
-            style={{
-              padding: "0.5rem 1rem",
-              borderRadius: "0.5rem",
-              border: "1px solid #374151",
-              backgroundColor: isEditing ? "#3b82f6" : "#030712",
-              color: "#e5e7eb",
-              fontSize: "0.85rem",
-              cursor: "pointer",
-              fontWeight: 500,
-            }}
+            className={isEditing ? "btn btn-primary btn-sm" : "btn btn-secondary btn-sm"}
           >
             {isEditing ? "Done Editing" : "Edit PRD"}
           </button>
           {onExport && (
             <>
-              <button
-                onClick={() => onExport("markdown", prd)}
-                style={{
-                  padding: "0.5rem 1rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid #374151",
-                  backgroundColor: "#030712",
-                  color: "#e5e7eb",
-                  fontSize: "0.85rem",
-                  cursor: "pointer",
-                  fontWeight: 500,
-                }}
-              >
+              <button type="button" onClick={() => onExport("markdown", prd)} className="btn btn-secondary btn-sm">
                 Export MD
               </button>
-              <button
-                onClick={() => onExport("pdf", prd)}
-                style={{
-                  padding: "0.5rem 1rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid #374151",
-                  backgroundColor: "#030712",
-                  color: "#e5e7eb",
-                  fontSize: "0.85rem",
-                  cursor: "pointer",
-                  fontWeight: 500,
-                }}
-              >
+              <button type="button" onClick={() => onExport("pdf", prd)} className="btn btn-secondary btn-sm">
                 Export PDF
               </button>
             </>
           )}
           {onSave && (
-            <button
-              onClick={handleSave}
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: "0.5rem",
-                border: "none",
-                background: "linear-gradient(135deg, #10b981, #059669)",
-                color: "#fff",
-                fontSize: "0.85rem",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
+            <button type="button" onClick={handleSave} className="btn btn-primary btn-sm">
               Save to Project
             </button>
           )}
           {onRegenerate && (
-            <button
-              onClick={onRegenerate}
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: "0.5rem",
-                border: "1px solid #374151",
-                backgroundColor: "#030712",
-                color: "#e5e7eb",
-                fontSize: "0.85rem",
-                cursor: "pointer",
-                fontWeight: 500,
-              }}
-            >
+            <button type="button" onClick={onRegenerate} className="btn btn-ghost btn-sm">
               Regenerate
             </button>
           )}
         </div>
       </div>
 
-      <div
-        style={{
-          maxHeight: "600px",
-          overflowY: "auto",
-          padding: "1rem",
-          backgroundColor: "#030712",
-          borderRadius: "0.5rem",
-          border: "1px solid #1f2937",
-        }}
-      >
-        {/* Title */}
-        <div style={{ marginBottom: "2rem" }}>
-          <EditableField
-            label="Title"
-            value={prd.title || projectName}
-            onChange={(value) => updateSection("title", value)}
-          />
-          <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
+      <div className="prd-document-shell">
+        <div className="prd-document prd-print-content">
+          <header className="prd-doc-header">
+            <p className="prd-doc-eyebrow">Product Requirements Document</p>
             <EditableField
-              label="Version"
-              value={prd.version || "1.0"}
-              onChange={(value) => updateSection("version", value)}
+              label=""
+              titleField
+              value={prd.title || projectName}
+              onChange={(value) => updateSection("title", value)}
             />
-            <EditableField
-              label="Date"
-              value={prd.date || new Date().toISOString().split("T")[0]}
-              onChange={(value) => updateSection("date", value)}
-            />
-          </div>
-        </div>
+            <div className="prd-doc-meta-fields">
+              <EditableField
+                label="Version"
+                value={prd.version || "1.0"}
+                onChange={(value) => updateSection("version", value)}
+              />
+              <EditableField
+                label="Date"
+                value={prd.date || new Date().toISOString().split("T")[0]}
+                onChange={(value) => updateSection("date", value)}
+              />
+            </div>
+          </header>
 
         {/* Executive Summary */}
         {prd.executiveSummary !== undefined && (
-          <section style={{ marginBottom: "2rem", position: "relative" }}>
+          <section className="prd-doc-section">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <h2 style={{ color: "#e5e7eb" }}>Executive Summary</h2>
+              <h2>Executive Summary</h2>
               {isEditing && (
                 <button
                   onClick={() => removeSection("executiveSummary")}
                   style={{
                     padding: "0.25rem 0.5rem",
                     borderRadius: "0.25rem",
-                    border: "1px solid #7f1d1d",
+                    border: "1px solid #fecaca",
                     backgroundColor: "transparent",
-                    color: "#fca5a5",
+                    color: "#dc2626",
                     fontSize: "0.75rem",
                     cursor: "pointer",
                   }}
@@ -364,18 +294,18 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
 
         {/* Problem Statement */}
         {prd.problemStatement && (
-          <section style={{ marginBottom: "2rem", position: "relative" }}>
+          <section className="prd-doc-section">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-              <h2 style={{ color: "#e5e7eb" }}>Problem Statement</h2>
+              <h2>Problem Statement</h2>
               {isEditing && (
                 <button
                   onClick={() => removeSection("problemStatement")}
                   style={{
                     padding: "0.25rem 0.5rem",
                     borderRadius: "0.25rem",
-                    border: "1px solid #7f1d1d",
+                    border: "1px solid #fecaca",
                     backgroundColor: "transparent",
-                    color: "#fca5a5",
+                    color: "#dc2626",
                     fontSize: "0.75rem",
                     cursor: "pointer",
                   }}
@@ -416,22 +346,13 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
 
         {/* User Personas */}
         {prd.userPersonas && prd.userPersonas.length > 0 && (
-          <section style={{ marginBottom: "2rem" }}>
-            <h2 style={{ color: "#e5e7eb", marginBottom: "0.75rem" }}>User Personas</h2>
+          <section className="prd-doc-section">
+            <h2>User Personas</h2>
             <SectionHint>
               Real people from your interviews — who they are, what they need, and what frustrates them. Used to write user stories and prioritize features.
             </SectionHint>
             {prd.userPersonas.map((persona, index) => (
-              <div
-                key={index}
-                style={{
-                  marginBottom: "1.5rem",
-                  padding: "1rem",
-                  backgroundColor: "#0f172a",
-                  borderRadius: "0.5rem",
-                  border: "1px solid #1f2937",
-                }}
-              >
+              <div key={index} className="prd-doc-card">
                 <EditableField
                   label="Name"
                   value={persona.name}
@@ -487,19 +408,10 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
 
         {/* Features - Show simplified for now */}
         {prd.features && prd.features.length > 0 && (
-          <section style={{ marginBottom: "2rem" }}>
-            <h2 style={{ color: "#e5e7eb", marginBottom: "0.75rem" }}>Features & Requirements</h2>
+          <section className="prd-doc-section">
+            <h2>Features & Requirements</h2>
             {prd.features.map((feature, index) => (
-              <div
-                key={index}
-                style={{
-                  marginBottom: "1rem",
-                  padding: "1rem",
-                  backgroundColor: "#0f172a",
-                  borderRadius: "0.5rem",
-                  border: "1px solid #1f2937",
-                }}
-              >
+              <div key={index} className="prd-doc-card">
                 <EditableField
                   label="Feature Name"
                   value={feature.name}
@@ -525,12 +437,19 @@ function EditablePRD({ prd: initialPrd, projectName, onSave, onExport, onRegener
         )}
 
         {isEditing && (
-          <div style={{ marginTop: "2rem", padding: "1rem", backgroundColor: "#1e3a8a", borderRadius: "0.5rem" }}>
-            <p style={{ color: "#93c5fd", fontSize: "0.85rem" }}>
-              💡 <strong>Editing Mode:</strong> Click on any field to edit. Changes are saved when you click "Save to Project".
-            </p>
+          <div className="prd-edit-banner">
+            <strong>Editing mode:</strong> Click any field to edit. Changes are saved when you click Save to Project.
           </div>
         )}
+        </div>
+
+        <div className="prd-doc-watermark">
+          <img src="/assets/parseai-wordmark-transparent.png" alt="ParseAi" draggable={false} />
+        </div>
+      </div>
+
+      <div className="prd-print-page-logo" aria-hidden="true">
+        <img src="/assets/parseai-wordmark-transparent.png" alt="ParseAi" draggable={false} />
       </div>
     </div>
   );

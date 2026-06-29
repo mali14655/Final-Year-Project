@@ -15,7 +15,7 @@ export const CHAT_MODELS = GEMINI_MODELS;
 export class GeminiQuotaError extends Error {
   constructor(feature = "AI processing") {
     super(
-      `Daily Gemini API limit reached. ${feature} could not complete. Free tier allows ~20 requests/day per model — wait until tomorrow or check usage at https://ai.dev/rate-limit`
+      `Daily AI limit reached — ${feature} could not complete. The Gemini free tier allows a limited number of requests per day. Try again tomorrow or upgrade your API plan.`
     );
     this.name = "GeminiQuotaError";
     this.statusCode = 429;
@@ -52,7 +52,7 @@ export function formatGeminiError(error, feature = "AI processing") {
 
   if (/503|high demand|unavailable|fetch failed/i.test(msg)) {
     const err = new Error(
-      `Gemini is temporarily overloaded. ${feature} could not complete — please wait a minute and try again.`
+      `AI service is temporarily busy — ${feature} could not complete. Please wait a minute and try again.`
     );
     err.statusCode = 503;
     err.code = "GEMINI_UNAVAILABLE";
@@ -60,7 +60,7 @@ export function formatGeminiError(error, feature = "AI processing") {
   }
 
   if (/GEMINI_API_KEY|API key/i.test(msg)) {
-    const err = new Error("Gemini API key is missing or invalid. Check GEMINI_API_KEY in backend/.env");
+    const err = new Error("AI is not configured on the server. GEMINI_API_KEY is missing or invalid.");
     err.statusCode = 500;
     err.code = "GEMINI_CONFIG_ERROR";
     return err;

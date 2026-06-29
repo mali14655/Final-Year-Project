@@ -6,19 +6,7 @@ function ProtectedRoute({ children }) {
   const { loading, isAuthenticated } = useAuth();
 
   if (loading) {
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#0f172a",
-        }}
-      >
-        <LoadingSpinner />
-      </div>
-    );
+    return <LoadingSpinner variant="fullPage" />;
   }
 
   if (!isAuthenticated) {

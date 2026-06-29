@@ -22,86 +22,27 @@ function ConfirmDialog({ open, options, onConfirm, onCancel, isLoading }) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-dialog-title"
-      style={{
-        position: "fixed",
-        inset: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.75)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 10000,
-        padding: "1rem",
-      }}
+      className="modal-overlay"
+      style={{ zIndex: 10000 }}
       onClick={onCancel}
     >
-      <div
-        style={{
-          backgroundColor: "#020617",
-          borderRadius: "1rem",
-          padding: "1.5rem",
-          border: "1px solid #1f2937",
-          maxWidth: "440px",
-          width: "100%",
-          boxShadow: "0 25px 50px rgba(0, 0, 0, 0.5)",
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3
-          id="confirm-dialog-title"
-          style={{
-            margin: "0 0 0.75rem 0",
-            fontSize: "1.125rem",
-            fontWeight: 600,
-            color: "#e5e7eb",
-          }}
-        >
+      <div className="modal-content" style={{ maxWidth: "440px" }} onClick={(e) => e.stopPropagation()}>
+        <h3 id="confirm-dialog-title" className="heading-md" style={{ marginBottom: "0.75rem" }}>
           {options.title}
         </h3>
-        <p
-          style={{
-            margin: "0 0 1.5rem 0",
-            fontSize: "0.9rem",
-            color: "#9ca3af",
-            lineHeight: 1.6,
-          }}
-        >
+        <p className="text-muted" style={{ margin: "0 0 1.5rem", fontSize: "0.9rem", lineHeight: 1.6 }}>
           {options.message}
         </p>
-        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={isLoading}
-            style={{
-              padding: "0.625rem 1.25rem",
-              borderRadius: "0.5rem",
-              border: "1px solid #374151",
-              backgroundColor: "#030712",
-              color: "#e5e7eb",
-              fontSize: "0.875rem",
-              cursor: isLoading ? "default" : "pointer",
-              opacity: isLoading ? 0.6 : 1,
-            }}
-          >
+        <div className="confirm-dialog-actions">
+          <button type="button" onClick={onCancel} disabled={isLoading} className="btn btn-secondary">
             {options.cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
             disabled={isLoading}
-            style={{
-              padding: "0.625rem 1.25rem",
-              borderRadius: "0.5rem",
-              border: "none",
-              background: isDanger
-                ? "linear-gradient(135deg, #dc2626, #b91c1c)"
-                : "linear-gradient(135deg, #3b82f6, #2563eb)",
-              color: "#fff",
-              fontSize: "0.875rem",
-              fontWeight: 600,
-              cursor: isLoading ? "default" : "pointer",
-              opacity: isLoading ? 0.7 : 1,
-            }}
+            className={`btn ${isDanger ? "btn-danger-ghost" : "btn-primary"}`}
+            style={isDanger ? { padding: "0.625rem 1.25rem", fontSize: "0.875rem", background: "linear-gradient(135deg, #ef4444, #dc2626)", color: "#fff", border: "none" } : undefined}
           >
             {isLoading ? "Please wait..." : options.confirmLabel}
           </button>

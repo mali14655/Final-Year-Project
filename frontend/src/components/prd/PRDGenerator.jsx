@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { api } from "../../services/api";
 import EditablePRD from "./EditablePRD";
 import { showToast } from "../../utils/toast";
+import { getErrorMessage } from "../../utils/errors";
+import { downloadPrdMarkdown, openPrdPrintWindow } from "../../utils/prdExport";
+import { StepEyebrow, WorkflowHintList } from "../../hooks/usePreferences";
+import LoadingSpinner from "../common/LoadingSpinner";
 
 // Treat a PRD with no real content as "empty" so we show the Generate screen
 const isPrdEmpty = (prd) => {
@@ -40,7 +44,6 @@ function PRDGenerator({ insights, interviewId, interviewIds, projectId, intervie
   const [isSaving, setIsSaving] = useState(false);
   const [projectData, setProjectData] = useState(null);
 
-  // Load project data if projectId is provided
   useEffect(() => {
     if (projectId) {
       loadProject();
@@ -62,117 +65,8 @@ function PRDGenerator({ insights, interviewId, interviewIds, projectId, intervie
         setPrd(null);
       }
     } catch (error) {
-      console.error("Error loading project:", error);
+      showToast.apiError(error, "Failed to load project for PRD");
     }
-  };
-
-  // Helper functions for export (full PRD)
-  const generateMarkdown = (prd, projectName) => {
-    let md = `# ${prd.title || projectName || "Product Requirements Document"}\n\n`;
-    md += `**Version:** ${prd.version || "1.0"}\n`;
-    md += `**Date:** ${prd.date || new Date().toISOString().split("T")[0]}\n\n`;
-    md += `---\n\n`;
-
-    // Executive Summary
-    if (prd.executiveSummary) {
-      md += `## Executive Summary\n\n${prd.executiveSummary}\n\n`;
-    }
-
-    // Problem Statement
-    if (prd.problemStatement) {
-      md += `## Problem Statement\n\n`;
-      if (prd.problemStatement.problem) md += `### Problem\n${prd.problemStatement.problem}\n\n`;
-      if (prd.problemStatement.impact) md += `### Impact\n${prd.problemStatement.impact}\n\n`;
-      if (prd.problemStatement.currentState) md += `### Current State\n${prd.problemStatement.currentState}\n\n`;
-      if (prd.problemStatement.desiredState) md += `### Desired State\n${prd.problemStatement.desiredState}\n\n`;
-    }
-
-    // User Personas
-    if (prd.userPersonas && prd.userPersonas.length > 0) {
-      md += `## User Personas\n\n`;
-      prd.userPersonas.forEach((persona, index) => {
-        md += `### ${persona.name || `Persona ${index + 1}`}\n`;
-        if (persona.basedOnInterview) md += `*Based on: ${persona.basedOnInterview}*\n\n`;
-        if (persona.description) md += `${persona.description}\n\n`;
-        if (persona.needs && persona.needs.length > 0) {
-          md += `**Needs:**\n`;
-          persona.needs.forEach((need) => {
-            md += `- ${need}\n`;
-          });
-          md += `\n`;
-        }
-        if (persona.painPoints && persona.painPoints.length > 0) {
-          md += `**Pain Points:**\n`;
-          persona.painPoints.forEach((pain) => {
-            md += `- ${pain}\n`;
-          });
-          md += `\n`;
-        }
-      });
-    }
-
-    // Features (match simplified UI: name + description)
-    if (prd.features && prd.features.length > 0) {
-      md += `## Features & Requirements\n\n`;
-      prd.features.forEach((feature, index) => {
-        md += `### ${feature.name || `Feature ${index + 1}`}\n`;
-        if (feature.description) md += `${feature.description}\n\n`;
-      });
-    }
-
-    return md;
-  };
-
-  const generatePrintHTML = (prd, projectName) => {
-    let html = `<h1>${prd.title || projectName || "Product Requirements Document"}</h1>`;
-    html += `<p><strong>Version:</strong> ${prd.version || "1.0"} • <strong>Date:</strong> ${prd.date || new Date().toISOString().split("T")[0]}</p><hr>`;
-
-    // Mirror PRDPreview structure so PDF matches UI
-    if (prd.executiveSummary) html += `<section><h2>Executive Summary</h2><p>${prd.executiveSummary}</p></section>`;
-
-    if (prd.problemStatement) {
-      html += `<section><h2>Problem Statement</h2>`;
-      if (prd.problemStatement.problem) html += `<div><h3>Problem</h3><p>${prd.problemStatement.problem}</p></div>`;
-      if (prd.problemStatement.impact) html += `<div><h3>Impact</h3><p>${prd.problemStatement.impact}</p></div>`;
-      if (prd.problemStatement.currentState) html += `<div><h3>Current State</h3><p>${prd.problemStatement.currentState}</p></div>`;
-      if (prd.problemStatement.desiredState) html += `<div><h3>Desired State</h3><p>${prd.problemStatement.desiredState}</p></div>`;
-      html += `</section>`;
-    }
-
-    if (prd.userPersonas && prd.userPersonas.length > 0) {
-      html += `<section><h2>User Personas</h2>`;
-      prd.userPersonas.forEach((persona, index) => {
-        html += `<div class="section-block">`;
-        html += `<h3>${persona.name || `Persona ${index + 1}`}</h3>`;
-        if (persona.description) html += `<p>${persona.description}</p>`;
-        if (persona.needs && persona.needs.length > 0) {
-          html += `<p><strong>Needs:</strong></p><ul>`;
-          persona.needs.forEach((need) => (html += `<li>${need}</li>`));
-          html += `</ul>`;
-        }
-        if (persona.painPoints && persona.painPoints.length > 0) {
-          html += `<p><strong>Pain Points:</strong></p><ul>`;
-          persona.painPoints.forEach((pain) => (html += `<li>${pain}</li>`));
-          html += `</ul>`;
-        }
-        html += `</div>`;
-      });
-      html += `</section>`;
-    }
-
-    // Features (match simplified UI: name + description)
-    if (prd.features && prd.features.length > 0) {
-      html += `<section><h2>Features & Requirements</h2>`;
-      prd.features.forEach((feature, index) => {
-        html += `<div class="section-block">`;
-        html += `<h3>${feature.name || `Feature ${index + 1}`}</h3>`;
-        if (feature.description) html += `<p>${feature.description}</p>`;
-        html += `</div>`;
-      });
-      html += `</section>`;
-    }
-
-    return html;
   };
 
   const handleGenerate = async () => {
@@ -239,155 +133,115 @@ function PRDGenerator({ insights, interviewId, interviewIds, projectId, intervie
       showToast.success("PRD generated successfully");
     } catch (err) {
       showToast.dismiss(toastId);
-      setError(
-        err.response?.data?.error || "Failed to generate PRD. Please try again."
-      );
-      showToast.error(err.response?.data?.error || "Failed to generate PRD");
+      const message = getErrorMessage(err, "Failed to generate PRD. Add more insights and try again.");
+      setError(message);
+      showToast.apiError(err, message);
     } finally {
       setIsGenerating(false);
     }
   };
 
-  return (
-    <div
-      style={{
-        background: "#020617",
-        borderRadius: "1rem",
-        padding: "1.5rem",
-        border: "1px solid #1f2937",
-      }}
-    >
-      <h2
-        style={{
-          fontSize: "1.125rem",
-          fontWeight: 600,
-          marginBottom: "1rem",
-          color: "#e5e7eb",
-        }}
-      >
-        3. Generate PRD
-      </h2>
+  const hasPatterns = projectData?.patterns?.patterns?.length > 0;
 
-      <p style={{ color: "#9ca3af", fontSize: "0.85rem", marginBottom: "1rem", lineHeight: 1.5 }}>
-        {interviewCount >= 2
-          ? `Uses all ${interviewCount} interviews and saved patterns. Regenerating replaces the current PRD.`
-          : interviewCount === 1
-            ? "Uses your 1 interview. Add more interviews and run Patterns first for a stronger PRD."
-            : "Add interviews in step 1 before generating a PRD."}
-      </p>
+  return (
+    <>
+      {isGenerating && <LoadingSpinner variant="overlay" />}
+      <div className="surface-card prd-generator-panel">
+      <div className="panel-header-row">
+        <div className="panel-header-copy">
+          <StepEyebrow step={4} label="Step 4" />
+          <h2 className="heading-md">Product requirements</h2>
+          <p className="panel-header-desc">
+            {interviewCount >= 2
+              ? `Generate a PRD from ${interviewCount} interviews${hasPatterns ? " and saved patterns" : ""}. Edit sections inline and export when ready.`
+              : interviewCount === 1
+                ? "A PRD can be generated from 1 interview. Add more interviews and run Patterns for stronger requirements."
+                : "Add interviews first. The PRD is built from your research data and any patterns you identify."}
+          </p>
+        </div>
+      </div>
+
+      <div className="prd-readiness-stats">
+        <span className="prd-stat-chip">
+          {interviewCount} interview{interviewCount === 1 ? "" : "s"}
+        </span>
+        <span className={`prd-stat-chip ${hasPatterns ? "is-ready" : ""}`}>
+          {hasPatterns ? "Patterns ready" : "No patterns yet"}
+        </span>
+      </div>
 
       {!prd ? (
-        <div>
+        <div className="prd-generate-form">
+          <WorkflowHintList
+            title="Before you generate"
+            items={[
+              "Confirm interviews are processed and insights look accurate.",
+              "Run Patterns (Step 3) when you have 2+ interviews for cross-user themes.",
+              "Generation replaces any existing PRD in this project.",
+              "After generating, edit sections inline and export as Markdown or PDF.",
+            ]}
+          />
           {projectId && projectData ? (
-            <div style={{ marginBottom: "1rem", padding: "1rem", backgroundColor: "#0f172a", borderRadius: "0.5rem", border: "1px solid #1f2937" }}>
-              <p style={{ fontSize: "0.875rem", color: "#9ca3af", marginBottom: "0.5rem" }}>Project:</p>
-              <p style={{ fontSize: "1rem", fontWeight: 600, color: "#e5e7eb" }}>{projectData.name}</p>
+            <div className="project-info-card">
+              <p className="project-info-label">Project</p>
+              <p className="project-info-name">{projectData.name}</p>
               {projectData.description && (
-                <p style={{ fontSize: "0.875rem", color: "#d1d5db", marginTop: "0.5rem" }}>{projectData.description}</p>
+                <p className="project-info-desc">{projectData.description}</p>
               )}
             </div>
           ) : (
-            <div style={{ marginBottom: "1rem" }}>
-              <label
-                htmlFor="projectName"
-                style={{
-                  display: "block",
-                  fontSize: "0.875rem",
-                  fontWeight: 500,
-                  marginBottom: "0.5rem",
-                  color: "#d1d5db",
-                }}
-              >
-                Project Name *
+            <div className="form-field">
+              <label htmlFor="projectName" className="form-label">
+                Project name *
               </label>
               <input
                 id="projectName"
                 type="text"
+                className="input"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
                 placeholder="Enter project name"
-                style={{
-                  width: "100%",
-                  padding: "0.75rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid #374151",
-                  backgroundColor: "#030712",
-                  color: "#e5e7eb",
-                  fontSize: "0.9rem",
-                }}
               />
             </div>
           )}
 
-          <div style={{ marginBottom: "1rem" }}>
-            <label
-              htmlFor="projectDescription"
-              style={{
-                display: "block",
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                marginBottom: "0.5rem",
-                color: "#d1d5db",
-              }}
-            >
-              Project Description (Optional)
+          <div className="form-field">
+            <label htmlFor="projectDescription" className="form-label">
+              Project description (optional)
             </label>
             <textarea
               id="projectDescription"
+              className="textarea"
               value={projectDescription}
               onChange={(e) => setProjectDescription(e.target.value)}
-              placeholder="Brief description of the product..."
+              placeholder="Brief description of the product…"
               rows={3}
-              style={{
-                width: "100%",
-                padding: "0.75rem",
-                borderRadius: "0.5rem",
-                border: "1px solid #374151",
-                backgroundColor: "#030712",
-                color: "#e5e7eb",
-                fontSize: "0.9rem",
-                resize: "vertical",
-                fontFamily: "inherit",
-              }}
             />
           </div>
 
           <button
+            type="button"
             onClick={handleGenerate}
             disabled={isGenerating || (!projectId && !projectName.trim())}
-            style={{
-              width: "100%",
-              padding: "0.75rem 1rem",
-              borderRadius: "0.75rem",
-              border: "none",
-              background: isGenerating || (!projectId && !projectName.trim())
-                ? "#374151"
-                : "linear-gradient(135deg, #4f46e5, #6366f1, #0ea5e9)",
-              color: "#f9fafb",
-              fontWeight: 600,
-              fontSize: "0.95rem",
-              cursor: isGenerating || (!projectId && !projectName.trim()) ? "default" : "pointer",
-              opacity: isGenerating || (!projectId && !projectName.trim()) ? 0.6 : 1,
-              transition: "opacity 0.2s",
-            }}
+            className="btn btn-primary btn-block"
           >
-            {isGenerating ? "Generating PRD..." : "Generate PRD"}
+            {isGenerating ? "Generating PRD…" : "Generate PRD"}
           </button>
 
-          {error && (
-            <p
-              style={{
-                marginTop: "0.75rem",
-                fontSize: "0.85rem",
-                color: "#fca5a5",
-              }}
-            >
-              {error}
-            </p>
-          )}
+          {error && <p className="form-error">{error}</p>}
         </div>
       ) : (
-        <EditablePRD
+        <>
+          <WorkflowHintList
+            title="Editing your PRD"
+            items={[
+              "Click any section to edit text inline.",
+              "Save changes to store the updated PRD in this project.",
+              "Export as Markdown (.md) or open the print view to save as PDF.",
+              "Regenerate from the generate screen if you add new interviews or patterns.",
+            ]}
+          />
+          <EditablePRD
           prd={prd}
           projectName={projectName}
           onSave={async (editedPrd) => {
@@ -415,9 +269,8 @@ function PRDGenerator({ insights, interviewId, interviewIds, projectId, intervie
               showToast.dismiss(toastId);
               showToast.success("PRD saved to project");
             } catch (err) {
-              console.error("Error saving PRD:", err);
               showToast.dismiss(toastId);
-              showToast.error("Failed to save PRD");
+              showToast.apiError(err, "Failed to save PRD");
             } finally {
               setIsSaving(false);
             }
@@ -425,57 +278,17 @@ function PRDGenerator({ insights, interviewId, interviewIds, projectId, intervie
           onExport={(format, currentPrd) => {
             const prdToUse = currentPrd || prd;
             if (format === "markdown") {
-              const markdown = generateMarkdown(prdToUse, projectName);
-              const blob = new Blob([markdown], { type: "text/markdown" });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement("a");
-              a.href = url;
-              a.download = `${(prdToUse.title || projectName || "prd")
-                .replace(/[^a-z0-9]/gi, "_")
-                .toLowerCase()}_prd.md`;
-              document.body.appendChild(a);
-              a.click();
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              downloadPrdMarkdown(prdToUse, projectName);
             } else if (format === "pdf") {
-              // Use the PDF export helpers
-              const printWindow = window.open("", "_blank");
-              const printContent = generatePrintHTML(prdToUse, projectName);
-              printWindow.document.write(`
-                <!DOCTYPE html>
-                <html>
-                  <head>
-                    <title>${prdToUse.title || projectName || "PRD"}</title>
-                    <meta charset="utf-8">
-                    <style>
-                      * { margin: 0; padding: 0; box-sizing: border-box; }
-                      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; line-height: 1.6; color: #000; background: #fff; padding: 2rem; max-width: 800px; margin: 0 auto; }
-                      h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #000; page-break-after: avoid; }
-                      h2 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 1rem; color: #000; page-break-after: avoid; }
-                      h3 { font-size: 1.25rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: #000; page-break-after: avoid; }
-                      p { margin-bottom: 1rem; color: #000; }
-                      ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; color: #000; }
-                      li { margin-bottom: 0.5rem; }
-                      section { margin-bottom: 2rem; page-break-inside: avoid; }
-                      hr { margin: 2rem 0; border: none; border-top: 1px solid #ccc; }
-                      .section-block { background: #f9fafb; padding: 1rem; border-radius: 0.5rem; margin-bottom: 1rem; border: 1px solid #e5e7eb; }
-                      @media print { body { padding: 1rem; } .section-block { background: #fff; border: 1px solid #000; page-break-inside: avoid; } section { page-break-inside: avoid; } }
-                    </style>
-                  </head>
-                  <body>${printContent}</body>
-                </html>
-              `);
-              printWindow.document.close();
-              setTimeout(() => {
-                printWindow.focus();
-                printWindow.print();
-              }, 250);
+              openPrdPrintWindow(prdToUse, projectName);
             }
           }}
           onRegenerate={() => setPrd(null)}
         />
+        </>
       )}
     </div>
+    </>
   );
 }
 

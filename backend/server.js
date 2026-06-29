@@ -1,28 +1,34 @@
+import "./src/config/env.js";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import multer from "multer";
-import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { transcribeInterview, extractInsights, identifyPatterns, generatePRD } from "./src/services/aiService/index.js";
 import { extractParticipantName } from "./src/services/aiService/agents/prdAgent.js";
 import { generateContentWithFallback, CHAT_MODELS } from "./src/services/aiService/utils/geminiClient.js";
 import { processChatRequest } from "./src/services/aiService/agents/chatAgent.js";
-import { connectDB } from "./src/utils/db.js";
+import { connectDB, requireDb } from "./src/utils/db.js";
 import { respondWithAgentError } from "./src/utils/apiErrors.js";
 import Interview from "./src/models/Interview.js";
 import Project from "./src/models/Project.js";
 import { uploadToGridFS, getGridFSReadStream, deleteFromGridFS, replaceGridFSFile } from "./src/utils/gridfs.js";
 import { transcriptToPdfBuffer, getPdfFilename } from "./src/utils/transcriptToPdf.js";
 import authRoutes from "./src/routes/authRoutes.js";
+import adminRoutes from "./src/routes/adminRoutes.js";
 import { requireAuth } from "./src/middleware/auth.js";
 import { findProjectForUser, getInterviewAccess } from "./src/utils/accessControl.js";
 import { corsOriginCallback, applyCorsHeaders } from "./src/utils/corsConfig.js";
 
-dotenv.config();
-
-// Connect to MongoDB
-connectDB().catch(console.error);
+// Connect to MongoDB before handling API traffic
+try {
+  await connectDB();
+} catch (error) {
+  console.error("Cannot start without MongoDB:", error.message);
+  if (!process.env.VERCEL) {
+    process.exit(1);
+  }
+}
 
 const app = express();
 
@@ -38,7 +44,10 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
+app.use("/api", requireDb);
+
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((req, res, next) => {
   if (req.method === "OPTIONS") {

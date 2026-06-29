@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from "react";
 import { api } from "../../services/api";
 import ChatEditor from "./ChatEditor";
+import InsightsPanel from "./InsightsPanel";
+import PatternsPanel from "./PatternsPanel";
+import InterviewList from "./InterviewList";
 import PRDGenerator from "../prd/PRDGenerator";
 import InterviewMediaViewer from "./InterviewMediaViewer";
+import InterviewUpload from "./InterviewUpload";
 import { useConfirm } from "../common/ConfirmProvider";
 import { showToast } from "../../utils/toast";
+import { getErrorMessage } from "../../utils/errors";
+import LoadingSpinner from "../common/LoadingSpinner";
+import { StepEyebrow, WorkflowTip, TAB_HINTS } from "../../hooks/usePreferences";
+import WorkflowGuide from "../common/WorkflowGuide";
 
-function ProjectDetail({ projectId, onBack, onCreateNew }) {
+function ProjectDetail({ projectId, onBack, onCreateNew, onOpenHowItWorks }) {
   const [project, setProject] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -67,8 +75,9 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
         setEditedInsights([]);
       }
     } catch (err) {
-      console.error("Error loading project:", err);
-      setError("Failed to load project");
+      const message = getErrorMessage(err, "Failed to load project");
+      setError(message);
+      showToast.apiError(err, message);
     } finally {
       setIsLoading(false);
     }
@@ -95,9 +104,8 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
       showToast.success("Changes saved successfully");
       loadProject(getInterviewId(selectedInterview));
     } catch (err) {
-      console.error("Error saving project:", err);
       showToast.dismiss(toastId);
-      showToast.error("Failed to save changes. Please try again.");
+      showToast.apiError(err, "Failed to save changes. Please try again.");
     }
   };
 
@@ -138,21 +146,15 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
       showToast.dismiss(toastId);
       const insightCount = response.data.insights?.length || 0;
       if (insightCount === 0) {
-        showToast.error("Transcript saved but insights failed (API quota). Click Extract Insights to retry.");
+        showToast.warning(
+          "Interview saved, but AI could not extract insights — likely due to API limits. Click Extract Insights to retry."
+        );
       } else {
         showToast.success("Interview processed and saved");
       }
     } catch (err) {
-      console.error("Error uploading interview:", err);
       showToast.dismiss(toastId);
-      const message =
-        err.response?.data?.error ||
-        (err.code === "ECONNABORTED"
-          ? "Upload timed out. Try a shorter audio file or paste the transcript as text."
-          : err.message === "Network Error"
-            ? "Network error — file may be too large for Vercel (max ~4MB) or the server timed out."
-            : "Failed to upload interview");
-      showToast.error(message);
+      showToast.apiError(err, "Failed to upload interview");
     } finally {
       setIsUploading(false);
     }
@@ -187,9 +189,8 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
       showToast.dismiss(toastId);
       showToast.success("Transcript processed and saved as PDF");
     } catch (err) {
-      console.error("Error processing transcript:", err);
       showToast.dismiss(toastId);
-      showToast.error(err.response?.data?.error || "Failed to process transcript");
+      showToast.apiError(err, "Failed to process transcript");
     } finally {
       setIsUploading(false);
     }
@@ -216,9 +217,8 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
       showToast.dismiss(toastId);
       showToast.success("Patterns analyzed successfully");
     } catch (err) {
-      console.error("Error analyzing patterns:", err);
       showToast.dismiss(toastId);
-      showToast.error(err.response?.data?.error || "Failed to analyze patterns");
+      showToast.apiError(err, "Failed to analyze patterns across interviews");
     } finally {
       setIsAnalyzingPatterns(false);
     }
@@ -239,10 +239,10 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
       await loadProject(id);
       showToast.dismiss(toastId);
       showToast.success(`Extracted ${response.data.insightsCount} insights`);
+      setActiveTab("insights");
     } catch (err) {
-      console.error("Error extracting insights:", err);
       showToast.dismiss(toastId);
-      showToast.error(err.response?.data?.error || "Failed to extract insights");
+      showToast.apiError(err, "Failed to extract insights from this interview");
     } finally {
       setIsExtractingInsights(false);
     }
@@ -274,9 +274,8 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
       showToast.dismiss(toastId);
       showToast.success("Interview deleted");
     } catch (err) {
-      console.error("Error deleting interview:", err);
       showToast.dismiss(toastId);
-      showToast.error(err.response?.data?.error || "Failed to delete interview");
+      showToast.apiError(err, "Failed to delete interview");
     }
   };
 
@@ -305,9 +304,8 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
       showToast.success(`Project "${project.name}" deleted`);
       onBack();
     } catch (err) {
-      console.error("Error deleting project:", err);
       showToast.dismiss(toastId);
-      showToast.error(err.response?.data?.error || "Failed to delete project");
+      showToast.apiError(err, "Failed to delete project");
     } finally {
       setIsDeletingProject(false);
     }
@@ -316,54 +314,42 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
   const interviewCount = project?.interviews?.length || 0;
   const allInterviewIds = (project?.interviews || []).map(getInterviewId).filter(Boolean);
   const hasPatterns = project?.patterns?.patterns?.length > 0;
+  const hasPrd = Boolean(project?.prd?.document);
+  const totalInsightsCount = (project?.interviews || []).reduce(
+    (sum, interview) => sum + (interview.insights?.length || 0),
+    0
+  );
+  const hasInsights = totalInsightsCount > 0;
+  const selectedInsightCount = selectedInterview?.insights?.length || editedInsights.length || 0;
 
   if (isLoading) {
     return (
-      <div style={{ textAlign: "center", padding: "3rem", color: "#9ca3af" }}>
-        Loading project...
-      </div>
+      <>
+        <LoadingSpinner variant="overlay" />
+        <div className="page-boot-placeholder" aria-hidden="true" />
+      </>
     );
   }
 
   if (!projectId) {
     return (
       <div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#e5e7eb" }}>Create New Project</h1>
-          <button
-            onClick={onBack}
-            style={{
-              padding: "0.5rem 1rem",
-              borderRadius: "0.5rem",
-              border: "1px solid #374151",
-              backgroundColor: "#030712",
-              color: "#e5e7eb",
-              fontSize: "0.875rem",
-              cursor: "pointer",
-            }}
-          >
-            ← Back
+        <div className="detail-header">
+          <div>
+            <p className="eyebrow">New project</p>
+            <h1 className="detail-title">Create a project</h1>
+          </div>
+          <button type="button" onClick={onBack} className="btn btn-secondary">
+            Back
           </button>
         </div>
-        <div style={{ backgroundColor: "#020617", borderRadius: "1rem", padding: "2rem", border: "1px solid #1f2937" }}>
-          <p style={{ color: "#9ca3af", marginBottom: "1rem" }}>
-            Please create a project first to get started.
+        <div className="surface-card">
+          <p className="text-muted" style={{ marginBottom: "1.25rem" }}>
+            Create a project to start uploading interviews and generating insights.
           </p>
           {onCreateNew && (
-            <button
-              onClick={onCreateNew}
-              style={{
-                padding: "0.75rem 1.5rem",
-                borderRadius: "0.75rem",
-                border: "none",
-                background: "linear-gradient(135deg, #10b981, #059669)",
-                color: "#fff",
-                fontSize: "0.9rem",
-                cursor: "pointer",
-                fontWeight: 600,
-              }}
-            >
-              Create Project
+            <button type="button" onClick={onCreateNew} className="btn btn-primary btn-lg">
+              Create project
             </button>
           )}
         </div>
@@ -373,542 +359,223 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
 
   if (error || !project) {
     return (
-      <div style={{ textAlign: "center", padding: "3rem", color: "#fca5a5" }}>
+      <div style={{ textAlign: "center", padding: "3rem", color: "#dc2626" }}>
         {error || "Project not found"}
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="page-stack">
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-          paddingBottom: "1rem",
-          borderBottom: "1px solid #1f2937",
-        }}
-      >
-        <div>
-          <button
-            onClick={onBack}
-            style={{
-              padding: "0.5rem 1rem",
-              borderRadius: "0.5rem",
-              border: "1px solid #374151",
-              backgroundColor: "#030712",
-              color: "#e5e7eb",
-              fontSize: "0.875rem",
-              cursor: "pointer",
-              marginBottom: "0.5rem",
-            }}
-          >
-            ← Back to Projects
+      <div className="detail-header">
+        <div className="detail-header-main">
+          <button type="button" onClick={onBack} className="btn btn-secondary btn-sm detail-back-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Back to projects
           </button>
-          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#e5e7eb", margin: 0 }}>
-            {project.name}
-          </h1>
+          <p className="eyebrow">Project</p>
+          <h1 className="detail-title">{project.name}</h1>
           {project.description && (
-            <p style={{ fontSize: "0.9rem", color: "#9ca3af", marginTop: "0.5rem" }}>
-              {project.description}
-            </p>
+            <p className="detail-description">{project.description}</p>
+          )}
+          {hasUnsavedChanges && (
+            <WorkflowTip variant="inline" title="Unsaved changes" className="detail-save-hint">
+              You edited the transcript or insights. Click &quot;Save changes&quot; to keep your updates in this project.
+            </WorkflowTip>
           )}
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+        <div className="detail-actions">
+          {hasUnsavedChanges && (
+            <button
+              type="button"
+              onClick={handleSaveProject}
+              className="btn btn-primary btn-sm"
+            >
+              Save changes
+            </button>
+          )}
           <button
+            type="button"
             onClick={handleDeleteProject}
             disabled={isDeletingProject}
-            style={{
-              padding: "0.75rem 1.25rem",
-              borderRadius: "0.75rem",
-              border: "1px solid #7f1d1d",
-              backgroundColor: "transparent",
-              color: "#fca5a5",
-              fontSize: "0.875rem",
-              cursor: isDeletingProject ? "default" : "pointer",
-              fontWeight: 500,
-              opacity: isDeletingProject ? 0.6 : 1,
-            }}
+            className="btn btn-danger-ghost btn-sm"
           >
-            {isDeletingProject ? "Deleting..." : "Delete Project"}
-          </button>
-          <button
-            onClick={handleSaveProject}
-            disabled={!hasUnsavedChanges}
-            style={{
-              padding: "0.75rem 1.5rem",
-              borderRadius: "0.75rem",
-              border: "none",
-              background: hasUnsavedChanges
-                ? "linear-gradient(135deg, #10b981, #059669)"
-                : "#374151",
-              color: "#fff",
-              fontSize: "0.9rem",
-              cursor: hasUnsavedChanges ? "pointer" : "default",
-              fontWeight: 600,
-              opacity: hasUnsavedChanges ? 1 : 0.6,
-            }}
-          >
-            {hasUnsavedChanges ? "Save Changes" : "Saved"}
+            {isDeletingProject ? "Deleting…" : "Delete"}
           </button>
         </div>
       </div>
 
+      <WorkflowGuide
+        activeStep={activeTab}
+        interviewCount={interviewCount}
+        hasInsights={hasInsights}
+        hasPatterns={hasPatterns}
+        hasPrd={hasPrd}
+        onStepClick={setActiveTab}
+        onOpenGuide={onOpenHowItWorks}
+      />
+
       {/* Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: "0.5rem",
-          marginBottom: "1.5rem",
-          borderBottom: "1px solid #1f2937",
-        }}
-      >
+      <div className="tabs">
         <button
+          type="button"
           onClick={() => setActiveTab("interviews")}
-          style={{
-            padding: "0.75rem 1.5rem",
-            border: "none",
-            borderBottom: activeTab === "interviews" ? "2px solid #3b82f6" : "2px solid transparent",
-            backgroundColor: "transparent",
-            color: activeTab === "interviews" ? "#3b82f6" : "#9ca3af",
-            fontSize: "0.9rem",
-            cursor: "pointer",
-            fontWeight: activeTab === "interviews" ? 600 : 400,
-          }}
+          className={`tab ${activeTab === "interviews" ? "tab-active" : ""}`}
         >
-          1. Interviews ({project.interviews?.length || 0})
+          Interviews
+          <span className="tab-badge">{project.interviews?.length || 0}</span>
         </button>
         <button
+          type="button"
+          onClick={() => setActiveTab("insights")}
+          className={`tab ${activeTab === "insights" ? "tab-active" : ""}`}
+        >
+          Insights
+          <span className={`tab-badge ${hasInsights ? "tab-badge-active" : ""}`}>
+            {totalInsightsCount}
+          </span>
+        </button>
+        <button
+          type="button"
           onClick={() => setActiveTab("patterns")}
-          style={{
-            padding: "0.75rem 1.5rem",
-            border: "none",
-            borderBottom: activeTab === "patterns" ? "2px solid #3b82f6" : "2px solid transparent",
-            backgroundColor: "transparent",
-            color: activeTab === "patterns" ? "#3b82f6" : "#9ca3af",
-            fontSize: "0.9rem",
-            cursor: "pointer",
-            fontWeight: activeTab === "patterns" ? 600 : 400,
-          }}
+          className={`tab ${activeTab === "patterns" ? "tab-active" : ""}`}
         >
-          2. Patterns {hasPatterns ? "✓" : ""}
+          Patterns
+          <span className={`tab-status ${hasPatterns ? "is-complete" : ""}`} />
         </button>
         <button
+          type="button"
           onClick={() => setActiveTab("prd")}
-          style={{
-            padding: "0.75rem 1.5rem",
-            border: "none",
-            borderBottom: activeTab === "prd" ? "2px solid #3b82f6" : "2px solid transparent",
-            backgroundColor: "transparent",
-            color: activeTab === "prd" ? "#3b82f6" : "#9ca3af",
-            fontSize: "0.9rem",
-            cursor: "pointer",
-            fontWeight: activeTab === "prd" ? 600 : 400,
-          }}
+          className={`tab ${activeTab === "prd" ? "tab-active" : ""}`}
         >
-          3. PRD {project.prd?.document ? "✓" : ""}
+          PRD
+          <span className={`tab-status ${project.prd?.document ? "is-complete" : ""}`} />
         </button>
       </div>
 
-      <p style={{ color: "#6b7280", fontSize: "0.8rem", marginBottom: "1.25rem", marginTop: "-0.75rem" }}>
-        Add all interviews first → analyze patterns across them → generate one PRD for the whole project.
-      </p>
+      <WorkflowTip variant="prominent" className="tab-context-hint">
+        {TAB_HINTS[activeTab]}
+      </WorkflowTip>
 
       {/* Tab Content */}
       {activeTab === "interviews" && (
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+        <div className="two-col">
           {/* Interview List */}
-          <div
-            style={{
-              backgroundColor: "#020617",
-              borderRadius: "1rem",
-              padding: "1.5rem",
-              border: "1px solid #1f2937",
-              maxHeight: "600px",
-              overflowY: "auto",
-              display: "flex",
-              flexDirection: "column",
-            }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-              <h3 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb" }}>
-                Interviews
-              </h3>
+          <div className="surface-card interviews-sidebar">
+            <div className="interviews-sidebar-header">
+              <StepEyebrow step={1} />
+              <h3 className="heading-md">Interviews</h3>
+              <p className="interviews-sidebar-desc">
+                Upload audio or video, or paste a transcript. Each interview is saved separately.
+              </p>
             </div>
 
-            {/* Upload toggle + form */}
-            <div style={{ marginBottom: "1rem", padding: "1rem", backgroundColor: "#030712", borderRadius: "0.5rem" }}>
-              <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
-                <button
-                  type="button"
-                  onClick={() => setUploadMode("audio")}
-                  style={{
-                    flex: 1,
-                    padding: "0.5rem",
-                    borderRadius: "0.5rem",
-                    border: "1px solid #374151",
-                    backgroundColor: uploadMode === "audio" ? "#1e3a8a" : "#0f172a",
-                    color: uploadMode === "audio" ? "#93c5fd" : "#9ca3af",
-                    fontSize: "0.8rem",
-                    cursor: "pointer",
-                    fontWeight: uploadMode === "audio" ? 600 : 400,
-                  }}
-                >
-                  Upload Audio/Video
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUploadMode("text")}
-                  style={{
-                    flex: 1,
-                    padding: "0.5rem",
-                    borderRadius: "0.5rem",
-                    border: "1px solid #374151",
-                    backgroundColor: uploadMode === "text" ? "#1e3a8a" : "#0f172a",
-                    color: uploadMode === "text" ? "#93c5fd" : "#9ca3af",
-                    fontSize: "0.8rem",
-                    cursor: "pointer",
-                    fontWeight: uploadMode === "text" ? 600 : 400,
-                  }}
-                >
-                  Paste Transcript
-                </button>
-              </div>
+            <InterviewUpload
+              uploadMode={uploadMode}
+              onUploadModeChange={setUploadMode}
+              file={file}
+              onFileChange={setFile}
+              onFileUpload={handleFileUpload}
+              isUploading={isUploading}
+              textTitle={textTitle}
+              onTextTitleChange={setTextTitle}
+              textTranscript={textTranscript}
+              onTextTranscriptChange={setTextTranscript}
+              onTextUpload={handleTextUpload}
+            />
 
-              {uploadMode === "audio" ? (
-                <form onSubmit={handleFileUpload}>
-                  <label
-                    htmlFor="interviewFile"
-                    style={{
-                      display: "block",
-                      padding: "1rem",
-                      borderRadius: "0.5rem",
-                      border: "1px dashed #4b5563",
-                      cursor: "pointer",
-                      textAlign: "center",
-                      fontSize: "0.875rem",
-                      color: "#9ca3af",
-                    }}
-                  >
-                    <input
-                      id="interviewFile"
-                      type="file"
-                      accept="audio/*,video/*"
-                      onChange={(e) => setFile(e.target.files?.[0] || null)}
-                      style={{ display: "none" }}
-                    />
-                    {file ? file.name : "+ Upload Interview"}
-                  </label>
-                  {file && (
-                    <button
-                      type="submit"
-                      disabled={isUploading}
-                      style={{
-                        marginTop: "0.5rem",
-                        width: "100%",
-                        padding: "0.75rem",
-                        borderRadius: "0.5rem",
-                        border: "none",
-                        background: isUploading ? "#374151" : "linear-gradient(135deg, #4f46e5, #6366f1)",
-                        color: "#fff",
-                        fontSize: "0.875rem",
-                        cursor: isUploading ? "default" : "pointer",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {isUploading ? "Processing..." : "Process Interview"}
-                    </button>
-                  )}
-                </form>
-              ) : (
-                <form onSubmit={handleTextUpload}>
-                  <input
-                    type="text"
-                    value={textTitle}
-                    onChange={(e) => setTextTitle(e.target.value)}
-                    placeholder="Interview title (optional)"
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      marginBottom: "0.5rem",
-                      borderRadius: "0.5rem",
-                      border: "1px solid #374151",
-                      backgroundColor: "#0f172a",
-                      color: "#e5e7eb",
-                      fontSize: "0.875rem",
-                    }}
-                  />
-                  <textarea
-                    value={textTranscript}
-                    onChange={(e) => setTextTranscript(e.target.value)}
-                    placeholder="Paste your interview transcript here..."
-                    rows={6}
-                    style={{
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "0.5rem",
-                      border: "1px solid #374151",
-                      backgroundColor: "#0f172a",
-                      color: "#e5e7eb",
-                      fontSize: "0.875rem",
-                      resize: "vertical",
-                      fontFamily: "inherit",
-                    }}
-                  />
-                  <button
-                    type="submit"
-                    disabled={isUploading || !textTranscript.trim()}
-                    style={{
-                      marginTop: "0.5rem",
-                      width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "0.5rem",
-                      border: "none",
-                      background: isUploading || !textTranscript.trim() ? "#374151" : "linear-gradient(135deg, #4f46e5, #6366f1)",
-                      color: "#fff",
-                      fontSize: "0.875rem",
-                      cursor: isUploading || !textTranscript.trim() ? "default" : "pointer",
-                      fontWeight: 600,
-                    }}
-                  >
-                    {isUploading ? "Processing..." : "Process Transcript"}
-                  </button>
-                </form>
-              )}
-            </div>
             {project.interviews && project.interviews.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                {project.interviews.map((interview, index) => (
-                  <div
-                    key={interview.id || interview._id || index}
-                    onClick={() => selectInterview(interview)}
-                    style={{
-                      padding: "1rem",
-                      borderRadius: "0.5rem",
-                      backgroundColor:
-                        String(getInterviewId(selectedInterview)) === String(getInterviewId(interview))
-                          ? "#0f172a"
-                          : "#030712",
-                      border:
-                        String(getInterviewId(selectedInterview)) === String(getInterviewId(interview))
-                          ? "1px solid #3b82f6"
-                          : "1px solid #1f2937",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <div style={{ fontWeight: 600, color: "#e5e7eb", marginBottom: "0.5rem" }}>
-                      {interview.filename || interview.originalName || `Interview ${index + 1}`}
-                    </div>
-                    <div style={{ fontSize: "0.75rem", color: "#9ca3af" }}>
-                      {interview.insights?.length || 0} insights •{" "}
-                      {new Date(interview.createdAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <InterviewList
+                interviews={project.interviews}
+                selectedInterview={selectedInterview}
+                onSelect={selectInterview}
+                getInterviewId={getInterviewId}
+              />
             ) : (
-              <p style={{ color: "#9ca3af", fontSize: "0.9rem" }}>No interviews yet</p>
+              <p className="interviews-empty-copy">No interviews yet. Upload your first one above.</p>
             )}
           </div>
 
-          {/* Interview Detail with Chat */}
-          {selectedInterview && (
-            <div
-              style={{
-                backgroundColor: "#020617",
-                borderRadius: "1rem",
-                padding: "1.5rem",
-                border: "1px solid #1f2937",
-                display: "flex",
-                flexDirection: "column",
-                gap: "1rem",
-              }}
-            >
+          {selectedInterview ? (
+            <div className="surface-card interview-detail-panel">
               <InterviewMediaViewer interview={selectedInterview} />
-              {(editedInsights.length === 0 || selectedInterview?.insights?.length === 0) && editedTranscript.trim() && (
-                <div
-                  style={{
-                    padding: "0.875rem 1rem",
-                    backgroundColor: "#422006",
-                    border: "1px solid #92400e",
-                    borderRadius: "0.5rem",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: "1rem",
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <p style={{ color: "#fcd34d", fontSize: "0.85rem", margin: 0, lineHeight: 1.5 }}>
-                    No insights yet. This usually means Gemini API quota failed during upload — transcript is still saved.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleExtractInsights}
-                    disabled={isExtractingInsights}
-                    style={{
-                      padding: "0.5rem 1rem",
-                      borderRadius: "0.5rem",
-                      border: "none",
-                      background: isExtractingInsights ? "#374151" : "linear-gradient(135deg, #4f46e5, #6366f1)",
-                      color: "#fff",
-                      fontSize: "0.85rem",
-                      fontWeight: 600,
-                      cursor: isExtractingInsights ? "default" : "pointer",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {isExtractingInsights ? "Extracting..." : "Extract Insights"}
-                  </button>
-                </div>
-              )}
               <ChatEditor
                 transcript={editedTranscript}
-                insights={editedInsights}
                 onTranscriptChange={(newTranscript) => handleChatEdit("transcript", newTranscript)}
-                onInsightsChange={(newInsights) => handleChatEdit("insights", newInsights)}
               />
-              <button
-                type="button"
-                onClick={handleDeleteInterview}
-                style={{
-                  alignSelf: "flex-start",
-                  padding: "0.5rem 1rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid #7f1d1d",
-                  backgroundColor: "transparent",
-                  color: "#fca5a5",
-                  fontSize: "0.8rem",
-                  cursor: "pointer",
-                }}
-              >
-                Delete Interview
+              {selectedInsightCount > 0 && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  style={{ alignSelf: "flex-start" }}
+                  onClick={() => setActiveTab("insights")}
+                >
+                  View {selectedInsightCount} insight{selectedInsightCount === 1 ? "" : "s"}
+                </button>
+              )}
+              <button type="button" onClick={handleDeleteInterview} className="btn btn-danger-ghost interview-delete-btn">
+                Delete interview
               </button>
             </div>
+          ) : (
+            interviewCount > 0 && (
+              <div className="surface-card interview-detail-empty">
+                <p className="heading-md" style={{ margin: "0 0 0.35rem" }}>Select an interview</p>
+                <p className="text-muted" style={{ margin: 0, fontSize: "0.9rem" }}>
+                  Choose an interview from the list to play media and review the transcript.
+                </p>
+              </div>
+            )
           )}
         </div>
       )}
 
-      {activeTab === "patterns" && (
-        <div
-          style={{
-            backgroundColor: "#020617",
-            borderRadius: "1rem",
-            padding: "1.5rem",
-            border: "1px solid #1f2937",
-          }}
-        >
-          {interviewCount < 2 ? (
-            <div style={{ textAlign: "center", padding: "2rem 1rem" }}>
-              <h3 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", marginBottom: "0.75rem" }}>
-                2. Patterns & Trends
-              </h3>
-              <p style={{ color: "#9ca3af", fontSize: "0.9rem", lineHeight: 1.6, maxWidth: "420px", margin: "0 auto" }}>
-                Add at least <strong style={{ color: "#d1d5db" }}>2 interviews</strong> in step 1, then come back here to find themes that repeat across users.
+      {activeTab === "insights" && (
+        <div className="two-col">
+          <div className="surface-card interviews-sidebar">
+            <div className="interviews-sidebar-header">
+              <StepEyebrow step={2} label="Step 2" />
+              <h3 className="heading-md">By interview</h3>
+              <p className="interviews-sidebar-desc">
+                Each interview has its own insight set. Select one to review pains, needs, and opportunities.
               </p>
-              <button
-                type="button"
-                onClick={() => setActiveTab("interviews")}
-                style={{
-                  marginTop: "1.25rem",
-                  padding: "0.625rem 1.25rem",
-                  borderRadius: "0.5rem",
-                  border: "1px solid #374151",
-                  backgroundColor: "#0f172a",
-                  color: "#93c5fd",
-                  fontSize: "0.875rem",
-                  cursor: "pointer",
-                  fontWeight: 500,
-                }}
-              >
-                Go to Interviews
-              </button>
             </div>
-          ) : (
-            <>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h3 style={{ fontSize: "1.125rem", fontWeight: 600, color: "#e5e7eb", margin: 0 }}>
-              2. Patterns & Trends
-            </h3>
-            <button
-              onClick={handleAnalyzePatterns}
-              disabled={isAnalyzingPatterns}
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: "0.5rem",
-                border: "none",
-                background: isAnalyzingPatterns ? "#374151" : "linear-gradient(135deg, #4f46e5, #6366f1)",
-                color: "#fff",
-                fontSize: "0.875rem",
-                cursor: isAnalyzingPatterns ? "default" : "pointer",
-                fontWeight: 600,
-              }}
-            >
-              {isAnalyzingPatterns ? "Analyzing..." : hasPatterns ? "Re-analyze Patterns" : "Analyze Patterns"}
-            </button>
+            {project.interviews?.length > 0 ? (
+              <InterviewList
+                interviews={project.interviews}
+                selectedInterview={selectedInterview}
+                onSelect={selectInterview}
+                getInterviewId={getInterviewId}
+              />
+            ) : (
+              <p className="interviews-empty-copy">
+                Upload interviews first, then return here to extract and review insights.
+              </p>
+            )}
           </div>
 
-          {project.patterns?.summary && (
-            <div style={{ marginBottom: "1.5rem", padding: "1rem", backgroundColor: "#030712", borderRadius: "0.5rem", border: "1px solid #1f2937" }}>
-              {project.patterns.summary.topThemes?.length > 0 && (
-                <p style={{ color: "#d1d5db", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
-                  <strong style={{ color: "#93c5fd" }}>Top themes:</strong> {project.patterns.summary.topThemes.join(", ")}
-                </p>
-              )}
-              {project.patterns.summary.criticalIssues?.length > 0 && (
-                <p style={{ color: "#d1d5db", fontSize: "0.875rem", marginBottom: "0.5rem" }}>
-                  <strong style={{ color: "#fca5a5" }}>Critical issues:</strong> {project.patterns.summary.criticalIssues.join(", ")}
-                </p>
-              )}
-              {project.patterns.summary.emergingTrends?.length > 0 && (
-                <p style={{ color: "#d1d5db", fontSize: "0.875rem", margin: 0 }}>
-                  <strong style={{ color: "#86efac" }}>Emerging trends:</strong> {project.patterns.summary.emergingTrends.join(", ")}
-                </p>
-              )}
-            </div>
-          )}
-
-          {hasPatterns ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {project.patterns.patterns.map((pattern, index) => (
-                <div
-                  key={index}
-                  style={{
-                    padding: "1rem",
-                    backgroundColor: "#030712",
-                    borderRadius: "0.5rem",
-                    border: "1px solid #1f2937",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "start", marginBottom: "0.5rem" }}>
-                    <h4 style={{ color: "#e5e7eb", fontWeight: 600 }}>{pattern.name}</h4>
-                    <span
-                      style={{
-                        fontSize: "0.75rem",
-                        padding: "0.25rem 0.5rem",
-                        borderRadius: "0.25rem",
-                        backgroundColor: "#1e3a8a",
-                        color: "#93c5fd",
-                      }}
-                    >
-                      {pattern.frequencyPercentage}%
-                    </span>
-                  </div>
-                  <p style={{ color: "#d1d5db", fontSize: "0.9rem" }}>{pattern.description}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p style={{ color: "#9ca3af" }}>
-              No patterns identified yet. Click &quot;Analyze Patterns&quot; to find themes across your {interviewCount} interviews.
-            </p>
-          )}
-            </>
-          )}
+          <InsightsPanel
+            interview={selectedInterview}
+            insights={editedInsights}
+            onInsightsChange={(newInsights) => handleChatEdit("insights", newInsights)}
+            onExtractInsights={handleExtractInsights}
+            isExtracting={isExtractingInsights}
+          />
         </div>
+      )}
+
+      {activeTab === "patterns" && (
+        <PatternsPanel
+          interviewCount={interviewCount}
+          patterns={project.patterns}
+          hasPatterns={hasPatterns}
+          isAnalyzing={isAnalyzingPatterns}
+          onAnalyze={handleAnalyzePatterns}
+          onGoToInterviews={() => setActiveTab("interviews")}
+        />
       )}
 
       {activeTab === "prd" && (
@@ -924,6 +591,10 @@ function ProjectDetail({ projectId, onBack, onCreateNew }) {
             }}
           />
         </div>
+      )}
+
+      {(isUploading || isExtractingInsights || isAnalyzingPatterns) && (
+        <LoadingSpinner variant="overlay" />
       )}
     </div>
   );

@@ -1,48 +1,88 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Login from "./Login";
 import Register from "./Register";
+import AppHeader from "../common/AppHeader";
 import { useAuth } from "../../context/AuthContext";
 
-function AuthPage() {
-  const [mode, setMode] = useState("login");
+function AuthPage({
+  initialMode = "login",
+  onHome,
+  onWorkspace,
+  onSignIn,
+  onSignUp,
+}) {
+  const [mode, setMode] = useState(initialMode);
   const { login, register } = useAuth();
 
-  return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "2rem 1rem",
-        background: "#0f172a",
-        color: "#e5e7eb",
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "420px",
-          backgroundColor: "#020617",
-          borderRadius: "1rem",
-          padding: "2rem",
-          border: "1px solid #1f2937",
-        }}
-      >
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "0.5rem", color: "#e5e7eb" }}>
-          Cursor for Product Managers
-        </h1>
-        <p style={{ color: "#9ca3af", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-          {mode === "login" ? "Sign in to manage your research projects" : "Create an account to get started"}
-        </p>
+  useEffect(() => {
+    setMode(initialMode);
+  }, [initialMode]);
 
-        {mode === "login" ? (
-          <Login onLogin={login} onSwitchToRegister={() => setMode("register")} />
-        ) : (
-          <Register onRegister={register} onSwitchToLogin={() => setMode("login")} />
-        )}
-      </div>
+  const isLogin = mode === "login";
+
+  const handleSignIn = () => {
+    setMode("login");
+    onSignIn?.();
+  };
+
+  const handleSignUp = () => {
+    setMode("register");
+    onSignUp?.();
+  };
+
+  return (
+    <div className="auth-page app-shell">
+      <AppHeader
+        onLogoClick={onHome}
+        onNavigateHome={onHome}
+        onNavigateWorkspace={onWorkspace}
+        onSignIn={handleSignIn}
+        onSignUp={handleSignUp}
+        authMode={mode}
+      />
+
+      <main className="auth-main">
+        <div className="auth-content">
+          <div className="auth-mode-switch" role="tablist" aria-label="Authentication mode">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={isLogin}
+              className={`auth-mode-btn${isLogin ? " is-active" : ""}`}
+              onClick={handleSignIn}
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={!isLogin}
+              className={`auth-mode-btn${!isLogin ? " is-active" : ""}`}
+              onClick={handleSignUp}
+            >
+              Create account
+            </button>
+          </div>
+
+          <div key={mode} className="auth-panel auth-panel-animate">
+            <div className="auth-intro">
+              <p className="eyebrow auth-eyebrow">{isLogin ? "Welcome back" : "Get started"}</p>
+              <h1 className="auth-title">{isLogin ? "Sign in to ParseAi" : "Create your account"}</h1>
+              <p className="auth-subtitle">
+                {isLogin
+                  ? "Continue to your projects, interviews, and PRDs."
+                  : "Create an account. An administrator must approve it before you can sign in."}
+              </p>
+            </div>
+
+            {isLogin ? (
+              <Login onLogin={login} />
+            ) : (
+              <Register onRegister={register} onPendingApproval={handleSignIn} />
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

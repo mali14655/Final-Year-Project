@@ -23,11 +23,16 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  const restoreSession = useCallback(async () => {
+    const data = await refreshSessionRequest();
+    setUser(data.user);
+    return data.user;
+  }, []);
+
   useEffect(() => {
     const init = async () => {
       try {
-        const data = await refreshSessionRequest();
-        setUser(data.user);
+        await restoreSession();
       } catch {
         clearAccessToken();
         setUser(null);
@@ -37,7 +42,7 @@ export function AuthProvider({ children }) {
     };
 
     init();
-  }, []);
+  }, [restoreSession]);
 
   useEffect(() => {
     const handleLogout = () => {
@@ -56,9 +61,22 @@ export function AuthProvider({ children }) {
 
   const register = async (name, email, password) => {
     const data = await registerRequest(name, email, password);
+    if (data.pendingApproval) {
+      return data;
+    }
     setUser(data.user);
-    return data.user;
+    return data;
   };
+
+  const updateUser = useCallback((nextUser) => {
+    setUser(nextUser);
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    const nextUser = await fetchCurrentUser();
+    setUser(nextUser);
+    return nextUser;
+  }, []);
 
   const value = {
     user,
@@ -67,6 +85,8 @@ export function AuthProvider({ children }) {
     login,
     register,
     logout,
+    updateUser,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
